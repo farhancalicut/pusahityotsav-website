@@ -1,0 +1,73 @@
+/* frontend/src/components/RegistrationPage.css */
+.registration-container {
+  max-width: 500px;
+  margin: 20px auto;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border-radius: 8px;
+  background-color: #fff;
+}
+
+.registration-form .form-group {
+  margin-bottom: 15px;
+}
+
+.registration-form label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  text-align: left;
+}
+
+.registration-form input,
+.registration-form select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box; /* Important for padding and width */
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 12px;
+  background-color: #282c34;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.submit-btn:hover {
+  background-color: #4a5162;
+}
+
+.form-message {
+  margin-top: 15px;
+  font-weight: bold;
+  color: #2a9d8f; /* A nice green for success */
+}
+
+/* frontend/src/components/RegistrationPage.css */
+
+.custom-textfield {
+  margin-bottom: 20px !important;
+}
+
+/* Style for the filled variant of MUI TextField */
+.custom-textfield .MuiFilledInput-root {
+  background-color: #f3e5f5 !important; /* A very light purple */
+  border-radius: 4px !important;
+}
+
+/* Remove the underline */
+.custom-textfield .MuiFilledInput-underline:before,
+.custom-textfield .MuiFilledInput-underline:after {
+  border-bottom: none !important;
+}
+
+/* Style the input when it is focused (clicked on) */
+.custom-textfield .Mui-focused {
+  background-color: #e1bee7 !important; /* A slightly darker purple on focus */
+}

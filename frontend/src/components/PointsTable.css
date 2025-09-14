@@ -1,0 +1,60 @@
+/* frontend/src/components/PointsTable.css */
+.points-table-container {
+  width: 100%;
+  margin-bottom: 40px;
+}
+
+.points-table {
+  width: 100%;
+  border-collapse: collapse;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.points-table th,
+.points-table td {
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+.points-table th {
+  background-color: #282c34;
+  color: white;
+}
+
+.points-table tbody tr:nth-of-type(even) {
+  background-color: #f9f9f9;
+}
+
+/* Responsive Styles */
+@media (max-width: 600px) {
+  .points-table thead {
+    display: none;
+  }
+
+  .points-table tr {
+    display: block;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+  }
+
+  .points-table td {
+    display: block;
+    text-align: right;
+    border: none;
+    border-bottom: 1px solid #eee;
+    position: relative;
+    padding-left: 50%;
+  }
+
+  .points-table td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 10px;
+    width: 45%;
+    padding-right: 10px;
+    white-space: nowrap;
+    text-align: left;
+    font-weight: bold;
+  }
+}

@@ -1,0 +1,15 @@
+# Python / Django
+*.pyc
+__pycache__/
+backend-env/
+db.sqlite3
+/media/
+.env
+
+# React
+frontend/node_modules/
+frontend/build/
+.DS_Store
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

@@ -1,0 +1,8 @@
+step 1:
+D:\pusahityotsav>backend-env\Scripts\activate
+
+step 2:
+(backend-env) D:\pusahityotsav>python manage.py runserver
+
+step 3:
+D:\pusahityotsav\frontend>npm start
