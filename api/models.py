@@ -62,6 +62,14 @@ class Result(models.Model):
     position = models.PositiveIntegerField(validators=[MinValueValidator(1), MaxValueValidator(3)])
     points = models.PositiveIntegerField(default=0, help_text="Points awarded by the judges.")
 
+    resultNumber = models.CharField(
+        max_length=100, 
+        blank=True, 
+        null=True, 
+        # unique=True, 
+        help_text="result number"
+    )
+
     def __str__(self):
         return f"{self.registration} - {self.position} Place"
 
@@ -74,3 +82,10 @@ class GalleryImage(models.Model):
 
     def __str__(self):
         return f"{self.caption} ({self.year})"
+    
+class IndividualChampion(Contestant):
+    """A proxy model to show top individual champions in the admin."""
+    class Meta:
+        proxy = True
+        verbose_name = "Individual Champion"
+        verbose_name_plural = "Individual Champions"

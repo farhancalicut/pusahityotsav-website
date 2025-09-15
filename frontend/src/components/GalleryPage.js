@@ -4,6 +4,7 @@ import axios from 'axios';
 import { Box, Typography, FormControl, InputLabel, Select, MenuItem, IconButton } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
 import './GalleryPage.css';
+import { API_BASE_URL } from '../apiConfig';
 
 function GalleryPage() {
   const [allImages, setAllImages] = useState([]);
@@ -14,7 +15,7 @@ function GalleryPage() {
   const [selectedYear, setSelectedYear] = useState(2025);
 
   useEffect(() => {
-    axios.get('http://127.0.0.1:8000/api/gallery/')
+    axios.get(`${API_BASE_URL}/api/gallery/`)
       .then(response => {
         const images = response.data;
         setAllImages(images);

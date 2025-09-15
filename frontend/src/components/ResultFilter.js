@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Paper, Typography, FormControl, InputLabel, Select, MenuItem, Button } from '@mui/material';
+import { API_BASE_URL } from '../apiConfig';
 
 function ResultFilter({ onFilter }) {
   const [categories, setCategories] = useState([]);
@@ -15,8 +16,8 @@ function ResultFilter({ onFilter }) {
     const fetchData = async () => {
       try {
         const [catResponse, eventResponse] = await Promise.all([
-          axios.get('http://127.0.0.1:8000/api/categories/'),
-          axios.get('http://127.0.0.1:8000/api/events/')
+          axios.get(`${API_BASE_URL}/api/categories/`),
+          axios.get(`${API_BASE_URL}/api/events/`)
         ]);
         setCategories(catResponse.data);
         setAllEvents(eventResponse.data);

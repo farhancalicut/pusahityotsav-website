@@ -1,4 +1,4 @@
-/* frontend/src/components/EventsPage.css */
+/* frontend/src/components/EventsPage.css
 .events-container {
   max-width: 800px;
   margin: 0 auto;
@@ -26,6 +26,6 @@
 }
 
 .event-rules {
-  white-space: pre-wrap; /* This helps display formatted rules correctly */
+  white-space: pre-wrap; 
   line-height: 1.6;
-}
+} */

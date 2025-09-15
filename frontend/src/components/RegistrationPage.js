@@ -6,7 +6,7 @@ import {
   RadioGroup, FormControlLabel, Radio, FormControl, FormLabel, FormGroup, Checkbox, Link,
   InputLabel, Select, CircularProgress
 } from '@mui/material';
-
+import { API_BASE_URL } from '../apiConfig';
 const steps = ['Personal Details', 'Select Category', 'Choose Competitions'];
 
 function RegistrationPage() {
@@ -31,9 +31,9 @@ function RegistrationPage() {
     const fetchData = async () => {
       try {
         const [groupsRes, categoriesRes, eventsRes] = await Promise.all([
-          axios.get('http://127.0.0.1:8000/api/groups/'),
-          axios.get('http://127.0.0.1:8000/api/categories/'),
-          axios.get('http://127.0.0.1:8000/api/events/')
+          axios.get(`${API_BASE_URL}/api/groups/`),
+          axios.get(`${API_BASE_URL}/api/categories/`),
+          axios.get(`${API_BASE_URL}/api/events/`)
         ]);
         setGroups(groupsRes.data);
         setCategories(categoriesRes.data);
@@ -139,11 +139,11 @@ function RegistrationPage() {
     };
 
     try {
-      const contestantResponse = await axios.post('http://127.0.0.1:8000/api/contestants/', contestantPayload);
+      const contestantResponse = await axios.post(`${API_BASE_URL}/api/contestants/`, contestantPayload);
       const contestantId = contestantResponse.data.id;
 
       const registrationPromises = selectedEventIDs.map(eventId => {
-        return axios.post('http://127.0.0.1:8000/api/registrations/', {
+        return axios.post(`${API_BASE_URL}/api/registrations/`, {
           contestant: contestantId,
           event: eventId
         });
@@ -248,7 +248,7 @@ function RegistrationPage() {
             </Typography>
             <Typography sx={{ my: 2 }}>
               Please join this WhatsApp group for program updates: 
-              <Link href="https://chat.whatsapp.com/your-group-link" target="_blank"> Join Group</Link>
+              <Link href="https://chat.whatsapp.com/JX3jdMNIOJaLUnwVSAXvH8?mode=ems_copy_t" target="_blank"> Join Group</Link>
             </Typography>
             <Typography>
               Thank you for participating, wishing you all the best.

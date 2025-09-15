@@ -60,7 +60,7 @@ function Footer() {
               {/* <IconButton href="https://www.twitter.com" target="_blank" sx={{ color: 'white' }}>
                 <XIcon />
               </IconButton> */}
-              <IconButton href="https://wa.me/yourphonenumber" target="_blank" sx={{ color: 'white' }}>
+              <IconButton href="https://chat.whatsapp.com/JX3jdMNIOJaLUnwVSAXvH8?mode=ems_copy_t" target="_blank" sx={{ color: 'white' }}>
                 <WhatsAppIcon />
               </IconButton>
             </Box>

@@ -76,7 +76,7 @@ class GenerateEventPostersView(APIView):
         if not results:
             return Response({"error": "No results found"}, status=404)
 
-        publication_number = results[0].id
+        result_number_to_display = results[0].resultNumber or ""
         template_files = ['template_black.png', 'template_pink.png', 'template_purple.png']
         generated_posters_urls = []
         event_details = results[0].registration.event
@@ -110,8 +110,7 @@ class GenerateEventPostersView(APIView):
                 draw.text((1500, 1450), "Result", font=font_result_label, fill=color_secondary)
 
                 # Publication Number
-                draw.text((1550, 1500), str(publication_number), font=font_publication_num, fill=color_primary)
-
+                draw.text((1550, 1500), str(result_number_to_display), font=font_publication_num, fill=color_primary)
                 # Category Name (now shown first)
                 draw.text((1750, 1600), event_details.category.name.upper(), font=font_category, fill=color_secondary)
 

@@ -1,11 +1,12 @@
 // frontend/src/components/Scoreboard.js
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Box, Typography, Paper, Grid, Chip, Container } from '@mui/material';
+import { Box, Typography, Paper, Chip } from '@mui/material';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import CountUp from 'react-countup';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
+import { API_BASE_URL } from '../apiConfig';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -45,7 +46,7 @@ function Scoreboard() {
 
   const fetchPoints = async () => {
     try {
-      const response = await axios.get('http://127.0.0.1:8000/api/points/');
+      const response = await axios.get(`${API_BASE_URL}/api/points/`);
       setPoints(response.data);
     } catch (error) {
       console.error('Error fetching points!', error);

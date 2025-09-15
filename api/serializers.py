@@ -31,7 +31,24 @@ class RegistrationSerializer(serializers.ModelSerializer):
         fields = ['id', 'contestant', 'event']
 
 class ResultSerializer(serializers.ModelSerializer):
-    pass 
+    # --- ADD these lines to get related data for the poster ---
+    contestant_name = serializers.CharField(source='registration.contestant.full_name', read_only=True)
+    event_name = serializers.CharField(source='registration.event.name', read_only=True)
+    group_name = serializers.CharField(source='registration.contestant.group.name', read_only=True)
+    # -----------------------------------------------------------
+
+    class Meta:
+        model = Result
+        # Add 'resultNumber' and the new fields above
+        fields = [
+            'id', 
+            'position', 
+            'points', 
+            'resultNumber',  # <-- Our new field
+            'contestant_name', 
+            'event_name',
+            'group_name'
+        ]
 class GalleryImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = GalleryImage

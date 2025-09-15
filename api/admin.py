@@ -1,10 +1,11 @@
 from django.contrib import admin
-from .models import Group, Category, Event, Contestant, Registration, Result, GalleryImage
+from django.db.models import Sum
+from .models import Group, Category, Event, Contestant, Registration, Result, GalleryImage,IndividualChampion
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
 from import_export.fields import Field
 from import_export.widgets import ForeignKeyWidget
-from import_export.widgets import ForeignKeyWidget, ManyToManyWidget
+from import_export.widgets import ForeignKeyWidget
 
 class ContestantResource(resources.ModelResource):
     group = Field(
@@ -82,6 +83,13 @@ class ResultAdmin(admin.ModelAdmin):
     list_filter = ('registration__event__category', 'registration__event__name', 'position')
     search_fields = ('registration__contestant__full_name',)
     autocomplete_fields = ['registration']
+    list_display = ('get_contestant_name', 'get_event_name', 'position', 'points', 'resultNumber') # <-- Add here
+    list_filter = ('registration__event__category', 'registration__event__name', 'position')
+    search_fields = ('registration__contestant__full_name', 'resultNumber',) # <-- And also add here
+    autocomplete_fields = ['registration']
+    
+    # It's also good practice to define the fields for the edit form
+    fields = ('registration', 'position', 'points', 'resultNumber')
 
     @admin.display(description='Contestant')
     def get_contestant_name(self, obj):
@@ -95,3 +103,33 @@ class ResultAdmin(admin.ModelAdmin):
 class GalleryImageAdmin(admin.ModelAdmin):
     list_display = ('caption', 'year', 'uploaded_at')
     list_filter = ('year',)
+
+@admin.register(IndividualChampion)
+class IndividualChampionAdmin(admin.ModelAdmin):
+    # Define the columns to display
+    list_display = ['full_name', 'group', 'total_points']
+
+    def get_queryset(self, request):
+        # Calculate the total points for each contestant
+        queryset = super().get_queryset(request)
+        queryset = queryset.annotate(
+            total_points=Sum('registration__result__points')
+        ).order_by('-total_points')
+        return queryset
+
+    @admin.display(description='Total Points', ordering='total_points')
+    def total_points(self, obj):
+        # Helper to display the annotated field
+        return obj.total_points
+
+    def has_add_permission(self, request):
+        # This is a read-only page, so disable the "Add" button
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        # Disable editing
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        # Disable deleting
+        return False
