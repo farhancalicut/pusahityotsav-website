@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework import viewsets
 from rest_framework.response import Response
 from django.db.models import Sum
-
+from django.http import JsonResponse
 from PIL import Image, ImageDraw, ImageFont
 import os
 from django.conf import settings
@@ -142,3 +142,20 @@ class GenerateEventPostersView(APIView):
                 continue
         
         return Response(generated_posters_urls)
+
+def get_registrations_for_event(request, event_id):
+    """
+    An API endpoint that returns all contestants registered for a given event.
+    """
+    if not request.user.is_staff: # Basic security
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
+
+    registrations = Registration.objects.filter(event_id=event_id).select_related('contestant')
+    data = [
+        {
+            'id': reg.id,
+            'name': reg.contestant.full_name
+        }
+        for reg in registrations
+    ]
+    return JsonResponse(data, safe=False)

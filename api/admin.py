@@ -1,4 +1,4 @@
-from django.contrib import admin
+from django.contrib import admin,messages
 from django.db.models import Sum
 from .models import Group, Category, Event, Contestant, Registration, Result, GalleryImage,IndividualChampion
 from import_export import resources
@@ -6,6 +6,10 @@ from import_export.admin import ImportExportModelAdmin
 from import_export.fields import Field
 from import_export.widgets import ForeignKeyWidget
 from import_export.widgets import ForeignKeyWidget
+from .forms import EventResultForm # Import our new form
+from django.urls import path,reverse
+from django.shortcuts import render, redirect
+from django.utils.html import format_html
 
 class ContestantResource(resources.ModelResource):
     group = Field(
@@ -46,10 +50,85 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
-    list_display = ('name', 'category')
+    list_display = ('name', 'category', 'add_results_button')
     list_filter = ('category',)
     search_fields = ('name',)
     autocomplete_fields = ['category']
+
+    def get_urls(self):
+        """Adds our custom URL to the admin."""
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                '<path:object_id>/add-results/',
+                self.admin_site.admin_view(self.add_results_view),
+                name='event_add_results',
+            ),
+        ]
+        return custom_urls + urls
+
+    def add_results_button(self, obj):
+        """A button that links to our custom view."""
+        url = reverse('admin:event_add_results', args=[obj.pk])
+        return format_html('<a class="button" href="{}">Add/Edit Results</a>', url)
+    add_results_button.short_description = 'Manage Results'
+    add_results_button.allow_tags = True
+
+    def add_results_view(self, request, object_id):
+        """The main view for handling our custom form."""
+        event = self.get_object(request, object_id)
+
+        if request.method == 'POST':
+            form = EventResultForm(request.POST)
+            if form.is_valid():
+                # Get the data from the form
+                data = form.cleaned_data
+                result_number = data['result_number']
+
+                # List of winners and their positions/points
+                winners_data = [
+                    (1, data.get('winner_1'), data.get('points_1')),
+                    (2, data.get('winner_2'), data.get('points_2')),
+                    (3, data.get('winner_3'), data.get('points_3')),
+                ]
+
+                # Loop through winners and save them
+                for position, registration, points in winners_data:
+                    if registration and points is not None:
+                        Result.objects.update_or_create(
+                            registration=registration,
+                            defaults={
+                                'position': position,
+                                'points': points,
+                                'resultNumber': result_number,
+                            }
+                        )
+
+                self.message_user(request, "Results for {} have been saved successfully.".format(event.name), messages.SUCCESS)
+                return redirect(reverse('admin:api_event_changelist'))
+
+        else: # This is a GET request
+            # Pre-populate the form with existing results for this event
+            initial_data = {'event': event, 'result_number': ''}
+            existing_results = Result.objects.filter(registration__event=event)
+
+            if existing_results.exists():
+                initial_data['result_number'] = existing_results.first().resultNumber
+
+            for result in existing_results:
+                if result.position in [1, 2, 3]:
+                    initial_data[f'winner_{result.position}'] = result.registration
+                    initial_data[f'points_{result.position}'] = result.points
+
+            form = EventResultForm(initial=initial_data)
+
+        context = dict(
+           self.admin_site.each_context(request),
+           opts=self.model._meta,
+           form=form,
+           event=event,
+        )
+        return render(request, 'admin/api/event/change_form_results.html', context)
 
 class RegistrationInline(admin.TabularInline):
     model = Registration
