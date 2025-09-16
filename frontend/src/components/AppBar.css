@@ -1,22 +1,21 @@
-
 .nav-link {
   position: relative;
-  color: #333 !important; 
+  color: #333 !important;
   /* text-decoration: none !important; */
   font-weight: 600 !important;
   padding: 8px 16px !important;
-  text-transform: uppercase !important; 
+  text-transform: uppercase !important;
 }
 
 /* This creates the underline effect */
 .nav-link::after {
-  content: '';
+  content: "";
   position: absolute;
   width: 0;
   height: 2px;
   bottom: 0;
   left: 50%;
-  background-color: #b40027; 
+  background-color: #b40027;
   transition: all 0.3s ease-in-out;
   transform: translateX(-50%);
 }

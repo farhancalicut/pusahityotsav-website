@@ -1,18 +1,20 @@
 // frontend/src/components/PointsTable.js
-import { useState, useEffect } from 'react';
-import axios from 'axios';
-import './PointsTable.css'; // We'll create this file next
-import { API_BASE_URL } from '../apiConfig';
+import { useState, useEffect } from "react";
+import axios from "axios";
+import "./PointsTable.css"; // We'll create this file next
+import { API_BASE_URL } from "../apiConfig";
 
 function PointsTable() {
   const [points, setPoints] = useState([]);
 
   const fetchPoints = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/sahityotsav/points/`);
+      const response = await axios.get(
+        `${API_BASE_URL}/api/sahityotsav/points/`,
+      );
       setPoints(response.data);
     } catch (error) {
-      console.error('Error fetching points!', error);
+      console.error("Error fetching points!", error);
     }
   };
 
