@@ -26,3 +26,5 @@ django-cloudinary-storage==0.3.0
 
 # Django Admin feature for importing/exporting data
 django-import-export==4.3.9
+
+Pillow==10.4.0
