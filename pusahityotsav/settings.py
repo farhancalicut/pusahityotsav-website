@@ -2,7 +2,7 @@
 Django settings for pusahityotsav project.
 Final Production Configuration for Render Deployment.
 """
-
+import cloudinary
 from pathlib import Path
 import os
 import dj_database_url
@@ -104,7 +104,7 @@ USE_TZ = True
 
 # --- STATIC FILES (Handled by WhiteNoise) ---
 STATIC_URL = 'static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles') # collectstatic will gather files here
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # --- MEDIA FILES (Handled by Cloudinary for Production) ---
@@ -114,11 +114,12 @@ DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 # --- CLOUDINARY CONFIGURATION ---
 # This block explicitly loads the environment variables.
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
-    'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
-    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
-}
+cloudinary.config(
+  cloud_name = os.environ.get('CLOUDINARY_CLOUD_NAME'),
+  api_key = os.environ.get('CLOUDINARY_API_KEY'),
+  api_secret = os.environ.get('CLOUDINARY_API_SECRET'),
+  secure = True
+)
 
 # --- CORS (Cross-Origin Resource Sharing) ---
 # Allows your React frontend to communicate with this API.
