@@ -99,20 +99,24 @@ function GalleryPage() {
             <div key={image.id} className="gallery-item">
               <img src={image.image} alt={image.caption} />
               <IconButton
-                onClick={() => handleDownload(image.image, image.caption)}
-                sx={{
-                  position: "absolute",
-                  bottom: 8,
-                  right: 8,
-                  backgroundColor: "rgba(0, 0, 0, 0.5)",
-                  color: "white",
-                  "&:hover": {
-                    backgroundColor: "rgba(0, 0, 0, 0.7)",
-                  },
-                }}
-              >
-                <DownloadIcon />
-              </IconButton>
+  component="a" // <-- Make the button act like a link
+  href={image.image} // <-- The direct URL to the Cloudinary image
+  download={`${image.caption}.png`} // <-- Suggest a filename to the browser
+  target="_blank" // <-- Helps with compatibility
+  rel="noopener noreferrer" // <-- Good security practice for new tabs
+  sx={{
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    color: 'white',
+    '&:hover': {
+      backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    },
+  }}
+>
+  <DownloadIcon />
+</IconButton>
             </div>
           ))}
         </div>
