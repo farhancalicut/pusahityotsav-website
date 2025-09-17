@@ -22,12 +22,12 @@ function GalleryPage() {
   // Set the default selected year to 2025
   const [selectedYear, setSelectedYear] = useState(2025);
 
-  useEffect(() => {
-    axios
-      .get(`${API_BASE_URL}/api/gallery/`)
-      .then((response) => {
-        const images = response.data;
-        setAllImages(images);
+useEffect(() => {
+  axios
+    .get(`${API_BASE_URL}/api/gallery/`) // Correct endpoint
+    .then((response) => {
+      setAllImages(response.data);
+    
 
         // Filter for the default year (2025) as soon as data arrives
         setFilteredImages(images.filter((img) => img.year === 2025));
@@ -97,7 +97,7 @@ function GalleryPage() {
         <div className="gallery-grid">
           {filteredImages.map((image) => (
             <div key={image.id} className="gallery-item">
-              <img src={image.image_url} alt={image.caption} />
+              <img src={image.image_url} alt={image.caption} loading="lazy"/>
               <IconButton
   component="a" // <-- Make the button act like a link
   href={image.image_url}// <-- The direct URL to the Cloudinary image

@@ -112,8 +112,9 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 MEDIA_URL = '/media/'
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
-# --- CLOUDINARY CONFIGURATION ---
-# This block explicitly loads the environment variables.
+
+# --- DEFINITIVE CLOUDINARY CONFIGURATION ---
+# This explicitly initializes the Cloudinary library with your environment variables.
 cloudinary.config(
   cloud_name = os.environ.get('CLOUDINARY_CLOUD_NAME'),
   api_key = os.environ.get('CLOUDINARY_API_KEY'),

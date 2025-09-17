@@ -4,18 +4,19 @@ from rest_framework.views import APIView
 from rest_framework import viewsets
 from rest_framework.response import Response
 from django.db.models import Sum
-from django.http import JsonResponse
+
 from PIL import Image, ImageDraw, ImageFont
 import os
 from django.conf import settings
-
-from .models import Registration
-from .serializers import RegistrationSerializer
 
 import io
 import cloudinary.uploader
 from rest_framework.views import APIView
 from rest_framework.response import Response
+
+from .models import Registration
+from .serializers import RegistrationSerializer
+
 class RegistrationViewSet(viewsets.ModelViewSet):
     queryset = Registration.objects.all()
     serializer_class = RegistrationSerializer
@@ -75,24 +76,21 @@ class PointsView(APIView):
 class GenerateEventPostersView(APIView):
     def get(self, request, event_id):
         try:
-            # 1. Fetch results using the CORRECT database query
             event = Event.objects.get(id=event_id)
             results = Result.objects.filter(event=event, position__in=[1, 2, 3]).order_by('position')
 
             if not results.exists():
                 return Response({"error": "No results published for this event yet."}, status=404)
 
-            result_number_to_display = results.first().resultNumber or ""
             template_files = ['template_black.png', 'template_pink.png', 'template_purple.png']
             generated_posters_urls = []
 
-            # 2. Loop through each template to generate posters
             for template_name in template_files:
                 template_path = os.path.join(settings.BASE_DIR, 'assets', template_name)
                 image = Image.open(template_path)
                 draw = ImageDraw.Draw(image)
 
-                # --- Font and Color Definitions ---
+                # Font and Color Definitions
                 font_main_path = os.path.join(settings.BASE_DIR, 'assets', 'fonts', 'Poppins-Bold.ttf')
                 font_secondary_path = os.path.join(settings.BASE_DIR, 'assets', 'fonts', 'Poppins-Regular.ttf')
                 font_event = ImageFont.truetype(font_main_path, 105)
@@ -102,7 +100,7 @@ class GenerateEventPostersView(APIView):
                 color_primary = (255, 255, 255)
                 color_secondary = (255, 255, 255)
 
-                # --- Drawing Text ---
+                # Drawing Text
                 draw.text((1750, 1700), event.name.upper(), font=font_event, fill=even_name_color)
                 start_y = 2290
                 for result in results:
@@ -112,19 +110,18 @@ class GenerateEventPostersView(APIView):
                     draw.text((2100, start_y + 95), department_name, font=font_department, fill=color_secondary)
                     start_y += 450
 
-                # 3. Save the generated image to a memory buffer
+                # Save the generated image to a memory buffer
                 buffer = io.BytesIO()
                 image.save(buffer, format='PNG')
                 buffer.seek(0)
 
-                # 4. Upload the image from memory to Cloudinary
+                # Upload the image from memory to Cloudinary
                 upload_result = cloudinary.uploader.upload(
                     buffer,
                     folder="generated_posters",
                     public_id=f'event_{event_id}_{template_name.split(".")[0]}'
                 )
 
-                # 5. Get the secure URL from the upload result
                 image_url = upload_result.get('secure_url')
                 if image_url:
                     generated_posters_urls.append({'id': template_name, 'url': image_url})
@@ -134,23 +131,5 @@ class GenerateEventPostersView(APIView):
         except Event.DoesNotExist:
             return Response({'error': 'Event not found.'}, status=404)
         except Exception as e:
-            # This will print the exact error to your Render logs for future debugging
             print(f"ERROR in GenerateEventPostersView: {e}")
             return Response({'error': 'An unexpected error occurred on the server.'}, status=500)
-
-def get_registrations_for_event(request, event_id):
-    """
-    An API endpoint that returns all contestants registered for a given event.
-    """
-    if not request.user.is_staff: # Basic security
-        return JsonResponse({'error': 'Unauthorized'}, status=403)
-
-    registrations = Registration.objects.filter(event_id=event_id).select_related('contestant')
-    data = [
-        {
-            'id': reg.id,
-            'name': reg.contestant.full_name
-        }
-        for reg in registrations
-    ]
-    return JsonResponse(data, safe=False)

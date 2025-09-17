@@ -49,14 +49,12 @@ class ResultSerializer(serializers.ModelSerializer):
             'event_name',
             'group_name'
         ]
-class GalleryImageSerializer(serializers.ModelSerializer):
-    # This new field will contain our full, absolute URL
-    image_url = serializers.SerializerMethodField()
+# In api/serializers.py
 
+class GalleryImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = GalleryImage
-        # We specify the fields we want, including our new one
-        fields = ['id', 'image_url', 'caption', 'year']
+        fields = '__all__'
 
     # This function generates the value for the 'image_url' field
     def get_image_url(self, obj):
