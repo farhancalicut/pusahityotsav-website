@@ -75,7 +75,7 @@ class PointsView(APIView):
 class GenerateEventPostersView(APIView):
     def get(self, request, event_id):
         try:
-            # 1. Fetch results from the database
+            # 1. Fetch results using the CORRECT database query
             event = Event.objects.get(id=event_id)
             results = Result.objects.filter(event=event, position__in=[1, 2, 3]).order_by('position')
 
@@ -92,7 +92,7 @@ class GenerateEventPostersView(APIView):
                 image = Image.open(template_path)
                 draw = ImageDraw.Draw(image)
 
-                # --- Font and Color Definitions (Your code is perfect here) ---
+                # --- Font and Color Definitions ---
                 font_main_path = os.path.join(settings.BASE_DIR, 'assets', 'fonts', 'Poppins-Bold.ttf')
                 font_secondary_path = os.path.join(settings.BASE_DIR, 'assets', 'fonts', 'Poppins-Regular.ttf')
                 font_event = ImageFont.truetype(font_main_path, 105)
@@ -102,7 +102,7 @@ class GenerateEventPostersView(APIView):
                 color_primary = (255, 255, 255)
                 color_secondary = (255, 255, 255)
 
-                # --- Drawing Text (Your code is perfect here) ---
+                # --- Drawing Text ---
                 draw.text((1750, 1700), event.name.upper(), font=font_event, fill=even_name_color)
                 start_y = 2290
                 for result in results:
@@ -112,7 +112,7 @@ class GenerateEventPostersView(APIView):
                     draw.text((2100, start_y + 95), department_name, font=font_department, fill=color_secondary)
                     start_y += 450
 
-                # 3. Save the generated image to a memory buffer instead of a file
+                # 3. Save the generated image to a memory buffer
                 buffer = io.BytesIO()
                 image.save(buffer, format='PNG')
                 buffer.seek(0)
@@ -120,7 +120,7 @@ class GenerateEventPostersView(APIView):
                 # 4. Upload the image from memory to Cloudinary
                 upload_result = cloudinary.uploader.upload(
                     buffer,
-                    folder="generated_posters", # Optional: organizes posters in Cloudinary
+                    folder="generated_posters",
                     public_id=f'event_{event_id}_{template_name.split(".")[0]}'
                 )
 
@@ -134,9 +134,9 @@ class GenerateEventPostersView(APIView):
         except Event.DoesNotExist:
             return Response({'error': 'Event not found.'}, status=404)
         except Exception as e:
-            # It's good practice to log the actual error for debugging
-            print(f"Error generating poster: {e}")
-            return Response({'error': 'An unexpected error occurred.'}, status=500)
+            # This will print the exact error to your Render logs for future debugging
+            print(f"ERROR in GenerateEventPostersView: {e}")
+            return Response({'error': 'An unexpected error occurred on the server.'}, status=500)
 
 def get_registrations_for_event(request, event_id):
     """

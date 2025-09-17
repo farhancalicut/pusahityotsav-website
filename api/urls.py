@@ -26,6 +26,5 @@ urlpatterns = [
     path('', include(router.urls)),
     path('points/', PointsView.as_view(), name='points'),
     path('generate-event-posters/<int:event_id>/', GenerateEventPostersView.as_view(), name='generate-event-posters'),
-    path('generate-poster/<int:event_id>/', GenerateEventPostersView.as_view(), name='generate-poster'),
-
+    path('generate-event-posters/<int:event_id>/', views.GenerateEventPostersView.as_view(), name='generate-event-posters'),
 ]
