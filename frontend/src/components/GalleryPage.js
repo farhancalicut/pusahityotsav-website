@@ -24,7 +24,7 @@ function GalleryPage() {
 
   useEffect(() => {
     axios
-      .get(`${API_BASE_URL}/api/gallery-images/`)
+      .get(`${API_BASE_URL}/api/gallery/`)
       .then((response) => {
         const images = response.data;
         setAllImages(images);
@@ -97,10 +97,10 @@ function GalleryPage() {
         <div className="gallery-grid">
           {filteredImages.map((image) => (
             <div key={image.id} className="gallery-item">
-              <img src={image.image} alt={image.caption} />
+              <img src={image.image_url} alt={image.caption} />
               <IconButton
   component="a" // <-- Make the button act like a link
-  href={image.image} // <-- The direct URL to the Cloudinary image
+  href={image.image_url}// <-- The direct URL to the Cloudinary image
   download={`${image.caption}.png`} // <-- Suggest a filename to the browser
   target="_blank" // <-- Helps with compatibility
   rel="noopener noreferrer" // <-- Good security practice for new tabs
