@@ -10,7 +10,7 @@ import {
   MenuItem,
   Button,
 } from "@mui/material";
-import { API_BASE_URL } from "../apiConfig";
+import API_BASE_URL from '../apiConfig'; 
 
 function ResultFilter({ onFilter }) {
   const [categories, setCategories] = useState([]);

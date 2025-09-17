@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import "./PointsTable.css"; // We'll create this file next
-import { API_BASE_URL } from "../apiConfig";
+import API_BASE_URL from '../apiConfig'; 
 
 function PointsTable() {
   const [points, setPoints] = useState([]);

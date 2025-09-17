@@ -23,7 +23,7 @@ import {
   Select,
   CircularProgress,
 } from "@mui/material";
-import { API_BASE_URL } from "../apiConfig";
+import API_BASE_URL from '../apiConfig'; 
 const steps = ["Personal Details", "Select Category", "Choose Competitions"];
 
 function RegistrationPage() {

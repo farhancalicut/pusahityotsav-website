@@ -4,7 +4,7 @@ import axios from "axios";
 import { Container } from "@mui/material";
 import ResultFilter from "./ResultFilter";
 import ResultPosters from "./ResultPosters";
-import { API_BASE_URL } from "../apiConfig";
+import API_BASE_URL from '../apiConfig'; 
 
 function ResultsPage() {
   const [posters, setPosters] = useState([]);

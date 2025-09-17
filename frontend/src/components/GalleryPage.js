@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
 import "./GalleryPage.css";
-import { API_BASE_URL } from "../apiConfig";
+import API_BASE_URL from '../apiConfig'; 
 
 function GalleryPage() {
   const [allImages, setAllImages] = useState([]);
