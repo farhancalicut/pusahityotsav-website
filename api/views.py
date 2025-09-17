@@ -12,6 +12,10 @@ from django.conf import settings
 from .models import Registration
 from .serializers import RegistrationSerializer
 
+import io
+import cloudinary.uploader
+from rest_framework.views import APIView
+from rest_framework.response import Response
 class RegistrationViewSet(viewsets.ModelViewSet):
     queryset = Registration.objects.all()
     serializer_class = RegistrationSerializer
@@ -66,82 +70,73 @@ class PointsView(APIView):
         data = [{'group_name': group.name, 'total_points': group.total_points or 0} for group in group_points]
         return Response(data)
 
+# In api/views.py
+
 class GenerateEventPostersView(APIView):
     def get(self, request, event_id):
-        results = Result.objects.filter(
-    registration__event__id=event_id, 
-    position__in=[1, 2, 3]
-).order_by('position')
+        try:
+            # 1. Fetch results from the database
+            event = Event.objects.get(id=event_id)
+            results = Result.objects.filter(event=event, position__in=[1, 2, 3]).order_by('position')
 
-        if not results:
-            return Response({"error": "No results found"}, status=404)
+            if not results.exists():
+                return Response({"error": "No results published for this event yet."}, status=404)
 
-        result_number_to_display = results[0].resultNumber or ""
-        template_files = ['template_black.png', 'template_pink.png', 'template_purple.png']
-        generated_posters_urls = []
-        event_details = results[0].registration.event
+            result_number_to_display = results.first().resultNumber or ""
+            template_files = ['template_black.png', 'template_pink.png', 'template_purple.png']
+            generated_posters_urls = []
 
-        for template_name in template_files:
-            try:
+            # 2. Loop through each template to generate posters
+            for template_name in template_files:
                 template_path = os.path.join(settings.BASE_DIR, 'assets', template_name)
                 image = Image.open(template_path)
                 draw = ImageDraw.Draw(image)
-                img_width, img_height = image.size
+
+                # --- Font and Color Definitions (Your code is perfect here) ---
                 font_main_path = os.path.join(settings.BASE_DIR, 'assets', 'fonts', 'Poppins-Bold.ttf')
                 font_secondary_path = os.path.join(settings.BASE_DIR, 'assets', 'fonts', 'Poppins-Regular.ttf')
-
-                # Create separate font objects for each text element
-                font_result_label = ImageFont.truetype(font_main_path, 65)
-                font_publication_num = ImageFont.truetype(font_main_path, 300)
-                font_category = ImageFont.truetype(font_secondary_path, 80)
                 font_event = ImageFont.truetype(font_main_path, 105)
                 font_winner = ImageFont.truetype(font_main_path, 78)
                 font_department = ImageFont.truetype(font_secondary_path, 62)
+                even_name_color = (252, 224, 9)
+                color_primary = (255, 255, 255)
+                color_secondary = (255, 255, 255)
 
-                # --- 2. COLOR CUSTOMIZATION ---
-                # Define different colors for your text
-                color_primary = (255, 255, 255) #if "black" in template_name else (0, 0, 0)
-                color_secondary = (255, 255, 255) #if "black" in template_name else (100, 100, 100)
-                even_name_color = (252, 224, 9) #if "black" in template_name else (255, 255, 255)
-                # --- 3. TEXT AND POSITION (ALIGNMENT) CUSTOMIZATION ---
-                # Adjust the (X, Y) coordinates for each draw.text() call
-
-                # Result Label
-                draw.text((1500, 1450), "Result", font=font_result_label, fill=color_secondary)
-
-                # Publication Number
-                draw.text((1550, 1500), str(result_number_to_display), font=font_publication_num, fill=color_primary)
-                # Category Name (now shown first)
-                draw.text((1750, 1600), event_details.category.name.upper(), font=font_category, fill=color_secondary)
-
-                # Event Name (now shown second)
-                draw.text((1750, 1700), event_details.name.upper(), font=font_event, fill=even_name_color)
-                
-                # Winners List
+                # --- Drawing Text (Your code is perfect here) ---
+                draw.text((1750, 1700), event.name.upper(), font=font_event, fill=even_name_color)
                 start_y = 2290
                 for result in results:
-                    winner_name = result.registration.contestant.full_name
-                    department_name = result.registration.contestant.group.name 
-                    
-                    # Winner Name
-                    draw.text((2100, start_y ), winner_name, font=font_winner, fill=color_primary)
-                    # Department Name
-                    draw.text((2100, start_y  + 95), department_name, font=font_department, fill=color_secondary)
-                    
+                    winner_name = result.contestant.name
+                    department_name = result.contestant.group.name
+                    draw.text((2100, start_y), winner_name, font=font_winner, fill=color_primary)
+                    draw.text((2100, start_y + 95), department_name, font=font_department, fill=color_secondary)
                     start_y += 450
 
+                # 3. Save the generated image to a memory buffer instead of a file
+                buffer = io.BytesIO()
+                image.save(buffer, format='PNG')
+                buffer.seek(0)
 
-                output_filename = f'event_{event_id}_{template_name}'
-                output_path = os.path.join(settings.MEDIA_ROOT, 'generated_posters', output_filename)
-                os.makedirs(os.path.dirname(output_path), exist_ok=True)
-                image.save(output_path, "PNG")
+                # 4. Upload the image from memory to Cloudinary
+                upload_result = cloudinary.uploader.upload(
+                    buffer,
+                    folder="generated_posters", # Optional: organizes posters in Cloudinary
+                    public_id=f'event_{event_id}_{template_name.split(".")[0]}'
+                )
 
-                image_url = request.build_absolute_uri(os.path.join(settings.MEDIA_URL, 'generated_posters', output_filename))
-                generated_posters_urls.append({'id': template_name, 'url': image_url})
-            except FileNotFoundError:
-                continue
-        
-        return Response(generated_posters_urls)
+                # 5. Get the secure URL from the upload result
+                image_url = upload_result.get('secure_url')
+                if image_url:
+                    generated_posters_urls.append({'id': template_name, 'url': image_url})
+
+            return Response(generated_posters_urls)
+
+        except Event.DoesNotExist:
+            return Response({'error': 'Event not found.'}, status=404)
+        except Exception as e:
+            # It's good practice to log the actual error for debugging
+            print(f"Error generating poster: {e}")
+            return Response({'error': 'An unexpected error occurred.'}, status=500)
 
 def get_registrations_for_event(request, event_id):
     """

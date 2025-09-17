@@ -13,6 +13,7 @@ from .views import (
 )
 from . import views
 
+
 router = DefaultRouter()
 router.register(r'categories', CategoryViewSet)
 router.register(r'events', EventViewSet)
@@ -25,6 +26,6 @@ urlpatterns = [
     path('', include(router.urls)),
     path('points/', PointsView.as_view(), name='points'),
     path('generate-event-posters/<int:event_id>/', GenerateEventPostersView.as_view(), name='generate-event-posters'),
-    path('get-registrations/<int:event_id>/', views.get_registrations_for_event, name='get_registrations_for_event'),
+    path('generate-poster/<int:event_id>/', GenerateEventPostersView.as_view(), name='generate-poster'),
 
 ]
