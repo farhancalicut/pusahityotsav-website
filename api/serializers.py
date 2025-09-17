@@ -50,6 +50,16 @@ class ResultSerializer(serializers.ModelSerializer):
             'group_name'
         ]
 class GalleryImageSerializer(serializers.ModelSerializer):
+    # Add this new line to define how the 'image' field should be serialized
+    image = serializers.SerializerMethodField()
+
     class Meta:
         model = GalleryImage
-        fields = ['id', 'caption', 'image', 'year']
+        fields = ('id', 'image', 'caption', 'year') # List fields explicitly
+
+    # Add this new function to the class
+    def get_image(self, obj):
+        request = self.context.get('request')
+        if obj.image and hasattr(obj.image, 'url'):
+            return request.build_absolute_uri(obj.image.url)
+        return None
