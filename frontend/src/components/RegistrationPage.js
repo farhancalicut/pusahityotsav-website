@@ -308,6 +308,33 @@ function RegistrationPage() {
         );
       case 1:
         return (
+          <>
+          <Paper
+              elevation={0}
+              sx={{
+                mt: 2,
+                borderRadius: 2,
+                overflow: "hidden",
+                border: "1px solid #ddd",
+              }}
+            >
+              <Box
+                sx={{
+                  backgroundColor: "#1a5b00ff",
+                  color: "white",
+                  px: 2,
+                  py: 1.5,
+                }}
+              >
+                <Typography variant="h6">Note</Typography>
+              </Box>
+              <Box sx={{ p: 2, backgroundColor: "#f5f5f5" }}>
+                <Typography>
+                  Category A - UG<br></br>Category B - PG & PhD<br></br>
+                </Typography>
+              </Box>
+            </Paper>
+            <br></br>
           <FormControl fullWidth required sx={{ mt: 2 }}>
             <InputLabel>Your Category</InputLabel>
             <Select
@@ -323,6 +350,7 @@ function RegistrationPage() {
               ))}
             </Select>
           </FormControl>
+          </>
         );
       case 2:
         const eligibleEvents = getEligibleEvents();
