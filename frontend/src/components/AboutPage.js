@@ -38,7 +38,7 @@ function AboutPage() {
 
           <Typography
             variant="body1"
-            sx={{ fontSize: "1.0rem", lineHeight: 1.4 }}
+            sx={{ fontSize: "1.0rem", lineHeight: 1.4, fontFamily: "Times New Roman" }}
           >
             Incepted 32 years ago in 1993, it has its commencement from the
             grassroot level - that is a family Sahityotsav. Crossing the levels
