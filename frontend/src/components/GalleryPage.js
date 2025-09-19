@@ -2,25 +2,17 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import {
-  Box,
-  Typography,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  IconButton,
+  Box, Typography, FormControl, InputLabel, Select, MenuItem, IconButton,
 } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
 import "./GalleryPage.css";
-import  API_BASE_URL  from "../apiConfig";
+import API_BASE_URL from "../apiConfig";
 
 function GalleryPage() {
   const [allImages, setAllImages] = useState([]);
   const [filteredImages, setFilteredImages] = useState([]);
   const [years, setYears] = useState([]);
-  // --- THIS IS THE KEY CHANGE ---
-  // Set the default selected year to 2025
-  const [selectedYear, setSelectedYear] = useState(2025);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear()); // Default to current year
 
   useEffect(() => {
     axios
@@ -28,9 +20,9 @@ function GalleryPage() {
       .then((response) => {
         const images = response.data;
         setAllImages(images);
-
-        // Filter for the default year (2025) as soon as data arrives
-        setFilteredImages(images.filter((img) => img.year === 2025));
+        
+        const currentYear = new Date().getFullYear();
+        setFilteredImages(images.filter((img) => img.year === currentYear));
 
         const uniqueYears = [...new Set(images.map((img) => img.year))];
         setYears(uniqueYears.sort((a, b) => b - a));
@@ -43,27 +35,7 @@ function GalleryPage() {
   const handleYearChange = (event) => {
     const year = event.target.value;
     setSelectedYear(year);
-    // Filter images based on the newly selected year
     setFilteredImages(allImages.filter((img) => img.year === year));
-  };
-
-  // --- NEW: Function to handle the download ---
-  const handleDownload = async (imageUrl, caption) => {
-    try {
-      const response = await axios.get(imageUrl, {
-        responseType: "blob",
-      });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", `${caption}.png`);
-      document.body.appendChild(link);
-      link.click();
-      link.parentNode.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("Error downloading the file!", error);
-    }
   };
 
   return (
@@ -83,7 +55,6 @@ function GalleryPage() {
         <FormControl sx={{ minWidth: 120 }} size="small">
           <InputLabel>Year</InputLabel>
           <Select value={selectedYear} label="Year" onChange={handleYearChange}>
-            {/* "All Years" MenuItem has been removed */}
             {years.map((year) => (
               <MenuItem key={year} value={year}>
                 {year}
@@ -97,9 +68,16 @@ function GalleryPage() {
         <div className="gallery-grid">
           {filteredImages.map((image) => (
             <div key={image.id} className="gallery-item">
-              <img src={image.image_url} alt={image.caption} />
+              {/* This now uses image.image, which will be the full Cloudinary URL */}
+              <img src={image.image_url } alt={image.caption} />
+              
+              {/* This is now a simple link, which is more reliable */}
               <IconButton
-                onClick={() => handleDownload(image.image, image.caption)}
+                component="a"
+                href={image.image_url }
+                download={`${image.caption}.png`}
+                target="_blank"
+                rel="noopener noreferrer"
                 sx={{
                   position: "absolute",
                   bottom: 8,
@@ -117,9 +95,8 @@ function GalleryPage() {
           ))}
         </div>
       ) : (
-        // Updated message
         <Typography variant="body2">
-          Images for the year 2025 have not been uploaded yet.
+          Images for the selected year have not been uploaded yet.
         </Typography>
       )}
     </Box>

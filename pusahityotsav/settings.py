@@ -250,20 +250,16 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = '/media/'
-# This logic uses local storage if DEBUG is True, and Cloudinary if DEBUG is False.
-if DEBUG:
-    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
-else:
-    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-    # This explicit config is the most robust way to ensure Cloudinary works on Render
-    cloudinary.config(
-      cloud_name = os.environ.get('CLOUDINARY_CLOUD_NAME'),
-      api_key = os.environ.get('CLOUDINARY_API_KEY'),
-      api_secret = os.environ.get('CLOUDINARY_API_SECRET'),
-      secure = True
-    )
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
+# --- DEFINITIVE CLOUDINARY CONFIGURATION ---
+# This explicitly initializes the Cloudinary library with your environment variables.
+cloudinary.config(
+  cloud_name = os.environ.get('CLOUDINARY_CLOUD_NAME'),
+  api_key = os.environ.get('CLOUDINARY_API_KEY'),
+  api_secret = os.environ.get('CLOUDINARY_API_SECRET'),
+  secure = True
+)
 # --- CORS ---
 CORS_ALLOWED_ORIGINS = [
     os.environ.get('FRONTEND_URL', 'http://localhost:3000'),
