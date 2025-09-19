@@ -1,6 +1,141 @@
+# """
+# Django settings for pusahityotsav project.
+# Final Production Configuration for Render Deployment.
+# """
+# import cloudinary
+# from pathlib import Path
+# import os
+# import dj_database_url
+# from dotenv import load_dotenv
+
+# # --- BASE CONFIGURATION ---
+# BASE_DIR = Path(__file__).resolve().parent.parent
+# load_dotenv() # Loads .env file for local development
+
+# # --- SECURITY SETTINGS (Loaded from Environment Variables) ---
+# # In production, these values MUST be set in the Render dashboard.
+# SECRET_KEY = os.environ.get('SECRET_KEY')
+# DEBUG = os.environ.get('DEBUG', 'False') == 'True'
+# # DEBUG=True
+
+# # --- HOSTS CONFIGURATION ---
+# # Automatically includes Render's domain and allows for local development hosts.
+# ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
+
+# RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+# if RENDER_EXTERNAL_HOSTNAME:
+#     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+
+# # --- APPLICATION DEFINITION ---
+# INSTALLED_APPS = [
+#     'django.contrib.admin',
+#     'django.contrib.auth',
+#     'django.contrib.contenttypes',
+#     'django.contrib.sessions',
+#     'django.contrib.messages',
+#     'django.contrib.staticfiles', # Required for WhiteNoise
+    
+#     # Third-party apps
+#     'cloudinary_storage', # For media file management
+#     'cloudinary',         # Cloudinary library
+#     'import_export',
+#     'rest_framework',
+#     'corsheaders',
+    
+#     # Local apps
+#     'api',
+# ]
+
+# # --- MIDDLEWARE (Correct Order is Crucial) ---
+# MIDDLEWARE = [
+#     'django.middleware.security.SecurityMiddleware',
+#     'whitenoise.middleware.WhiteNoiseMiddleware', # Should be right after SecurityMiddleware
+#     'django.contrib.sessions.middleware.SessionMiddleware',
+#     'corsheaders.middleware.CorsMiddleware',
+#     'django.middleware.common.CommonMiddleware',
+#     'django.middleware.csrf.CsrfViewMiddleware',
+#     'django.contrib.auth.middleware.AuthenticationMiddleware',
+#     'django.contrib.messages.middleware.MessageMiddleware',
+#     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+# ]
+
+# ROOT_URLCONF = 'pusahityotsav.urls'
+
+# TEMPLATES = [
+#     {
+#         'BACKEND': 'django.template.backends.django.DjangoTemplates',
+#         'DIRS': [],
+#         'APP_DIRS': True,
+#         'OPTIONS': {
+#             'context_processors': [
+#                 'django.template.context_processors.request',
+#                 'django.contrib.auth.context_processors.auth',
+#                 'django.contrib.messages.context_processors.messages',
+#             ],
+#         },
+#     },
+# ]
+
+# WSGI_APPLICATION = 'pusahityotsav.wsgi.application'
+
+# # --- DATABASE (PostgreSQL for Render) ---
+# # This uses the DATABASE_URL from Render's environment.
+# # It gracefully falls back to a local SQLite database if the URL is not found.
+# DATABASES = {
+#     'default': dj_database_url.config(
+#         default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+#         conn_max_age=600,
+#         conn_health_checks=True,
+#     )
+# }
+
+# # --- PASSWORD VALIDATION ---
+# AUTH_PASSWORD_VALIDATORS = [
+#     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+#     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+#     {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+#     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
+# ]
+
+# # --- INTERNATIONALIZATION ---
+# LANGUAGE_CODE = 'en-us'
+# TIME_ZONE = 'UTC'
+# USE_I18N = True
+# USE_TZ = True
+
+# # --- STATIC FILES (Handled by WhiteNoise) ---
+# STATIC_URL = 'static/'
+# STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+# STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# # --- MEDIA FILES (Handled by Cloudinary for Production) ---
+# # This is for your gallery images and downloadable templates.
+# MEDIA_URL = '/media/'
+# DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+
+# # --- DEFINITIVE CLOUDINARY CONFIGURATION ---
+# # This explicitly initializes the Cloudinary library with your environment variables.
+# cloudinary.config(
+#   cloud_name = os.environ.get('CLOUDINARY_CLOUD_NAME'),
+#   api_key = os.environ.get('CLOUDINARY_API_KEY'),
+#   api_secret = os.environ.get('CLOUDINARY_API_SECRET'),
+#   secure = True
+# )
+
+# # --- CORS (Cross-Origin Resource Sharing) ---
+# # Allows your React frontend to communicate with this API.
+# CORS_ALLOWED_ORIGINS = [
+#     os.environ.get('FRONTEND_URL', 'http://localhost:3000'),
+# ]
+
+# # --- DEFAULT PRIMARY KEY ---
+# DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
 """
 Django settings for pusahityotsav project.
-Final Production Configuration for Render Deployment.
+Final, unified configuration for local and production environments.
 """
 import cloudinary
 from pathlib import Path
@@ -12,15 +147,11 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv() # Loads .env file for local development
 
-# --- SECURITY SETTINGS (Loaded from Environment Variables) ---
-# In production, these values MUST be set in the Render dashboard.
 SECRET_KEY = os.environ.get('SECRET_KEY')
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 # --- HOSTS CONFIGURATION ---
-# Automatically includes Render's domain and allows for local development hosts.
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
-
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
@@ -32,23 +163,19 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles', # Required for WhiteNoise
-    
-    # Third-party apps
-    'cloudinary_storage', # For media file management
-    'cloudinary',         # Cloudinary library
+    'django.contrib.staticfiles',
+    'cloudinary_storage',
+    'cloudinary',
     'import_export',
     'rest_framework',
     'corsheaders',
-    
-    # Local apps
     'api',
 ]
 
-# --- MIDDLEWARE (Correct Order is Crucial) ---
+# --- MIDDLEWARE ---
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware', # Should be right after SecurityMiddleware
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -59,8 +186,7 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'pusahityotsav.urls'
-
-TEMPLATES = [
+TEMPLATES = [ # ... (This section is correct and unchanged)
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [],
@@ -74,22 +200,19 @@ TEMPLATES = [
         },
     },
 ]
-
 WSGI_APPLICATION = 'pusahityotsav.wsgi.application'
 
-# --- DATABASE (PostgreSQL for Render) ---
-# This uses the DATABASE_URL from Render's environment.
-# It gracefully falls back to a local SQLite database if the URL is not found.
+# --- DATABASE ---
+# Uses DATABASE_URL from .env locally, and from Render in production.
 DATABASES = {
     'default': dj_database_url.config(
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}", # Fallback if DATABASE_URL is not set
         conn_max_age=600,
-        conn_health_checks=True,
     )
 }
 
 # --- PASSWORD VALIDATION ---
-AUTH_PASSWORD_VALIDATORS = [
+AUTH_PASSWORD_VALIDATORS = [ # ... (This section is correct and unchanged)
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
     {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
@@ -101,32 +224,47 @@ LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# --- STATIC FILES (Handled by WhiteNoise) ---
+# # --- STATIC & MEDIA FILES ---
+# STATIC_URL = 'static/'
+# STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+# STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# MEDIA_URL = '/media/'
+# # This logic uses local storage if DEBUG is True, and Cloudinary if DEBUG is False.
+# if DEBUG:
+#     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+#     DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+# else:
+#     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+#     cloudinary.config(
+#       cloud_name = os.environ.get('CLOUDINARY_CLOUD_NAME'),
+#       api_key = os.environ.get('CLOUDINARY_API_KEY'),
+#       api_secret = os.environ.get('CLOUDINARY_API_SECRET'),
+#       secure = True
+#     )
+
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# --- MEDIA FILES (Handled by Cloudinary for Production) ---
-# This is for your gallery images and downloadable templates.
 MEDIA_URL = '/media/'
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+# This logic uses local storage if DEBUG is True, and Cloudinary if DEBUG is False.
+if DEBUG:
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+else:
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+    # This explicit config is the most robust way to ensure Cloudinary works on Render
+    cloudinary.config(
+      cloud_name = os.environ.get('CLOUDINARY_CLOUD_NAME'),
+      api_key = os.environ.get('CLOUDINARY_API_KEY'),
+      api_secret = os.environ.get('CLOUDINARY_API_SECRET'),
+      secure = True
+    )
 
-
-# --- DEFINITIVE CLOUDINARY CONFIGURATION ---
-# This explicitly initializes the Cloudinary library with your environment variables.
-cloudinary.config(
-  cloud_name = os.environ.get('CLOUDINARY_CLOUD_NAME'),
-  api_key = os.environ.get('CLOUDINARY_API_KEY'),
-  api_secret = os.environ.get('CLOUDINARY_API_SECRET'),
-  secure = True
-)
-
-# --- CORS (Cross-Origin Resource Sharing) ---
-# Allows your React frontend to communicate with this API.
+# --- CORS ---
 CORS_ALLOWED_ORIGINS = [
     os.environ.get('FRONTEND_URL', 'http://localhost:3000'),
 ]
-
-# --- DEFAULT PRIMARY KEY ---
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

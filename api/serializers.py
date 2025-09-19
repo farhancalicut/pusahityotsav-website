@@ -12,10 +12,13 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ['id', 'name']
 
 class EventSerializer(serializers.ModelSerializer):
-    category = serializers.StringRelatedField()
+    # We specify that we want to see the names of the categories, not just their IDs.
+    categories = serializers.StringRelatedField(many=True)
+
     class Meta:
         model = Event
-        fields = ['id', 'name', 'category', 'rules']
+        # We explicitly list the fields we want to send.
+        fields = ['id', 'name', 'categories']
 
 class ContestantSerializer(serializers.ModelSerializer):
     class Meta:
@@ -49,17 +52,7 @@ class ResultSerializer(serializers.ModelSerializer):
             'event_name',
             'group_name'
         ]
-# In api/serializers.py
-
 class GalleryImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = GalleryImage
-        fields = '__all__'
-
-    # This function generates the value for the 'image_url' field
-    def get_image_url(self, obj):
-        if obj.image and hasattr(obj.image, 'url'):
-            # request.build_absolute_uri() is the key to creating the full URL
-            request = self.context.get('request')
-            return request.build_absolute_uri(obj.image.url)
-        return "" # Return an empty string if there's no image
+        fields = ['id', 'caption', 'image', 'year']

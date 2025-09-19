@@ -11,17 +11,15 @@ function ResultsPage() {
   const [hasSearched, setHasSearched] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // This function is called by the filter component
   const handleFilter = (filters) => {
-    // Don't search if no program is selected
     if (!filters.event) {
       setHasSearched(false);
       return;
     }
 
     setHasSearched(true);
-    setIsLoading(true); // Start loading animation
-    setPosters([]); // Clear any old posters
+    setIsLoading(true);
+    setPosters([]);
 
     const fetchPosters = async () => {
       try {
@@ -31,9 +29,9 @@ function ResultsPage() {
         setPosters(response.data);
       } catch (error) {
         console.error("Error fetching posters!", error);
-        setPosters([]); // Ensure posters are cleared on error
+        setPosters([]);
       } finally {
-        setIsLoading(false); // Stop loading animation
+        setIsLoading(false);
       }
     };
 
@@ -43,8 +41,6 @@ function ResultsPage() {
   return (
     <Container maxWidth="lg" sx={{ pt: 4 }}>
       <ResultFilter onFilter={handleFilter} />
-
-      {/* Conditionally render the posters component or a loading spinner */}
       {hasSearched && <ResultPosters posters={posters} isLoading={isLoading} />}
     </Container>
   );

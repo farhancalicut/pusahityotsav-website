@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
 import "./GalleryPage.css";
-import API_BASE_URL from '../apiConfig'; 
+import  API_BASE_URL  from "../apiConfig";
 
 function GalleryPage() {
   const [allImages, setAllImages] = useState([]);
@@ -22,12 +22,12 @@ function GalleryPage() {
   // Set the default selected year to 2025
   const [selectedYear, setSelectedYear] = useState(2025);
 
-useEffect(() => {
-  axios
-    .get(`${API_BASE_URL}/api/gallery/`) // Correct endpoint
-    .then((response) => {
-      setAllImages(response.data);
-    
+  useEffect(() => {
+    axios
+      .get(`${API_BASE_URL}/api/gallery/`)
+      .then((response) => {
+        const images = response.data;
+        setAllImages(images);
 
         // Filter for the default year (2025) as soon as data arrives
         setFilteredImages(images.filter((img) => img.year === 2025));
@@ -97,26 +97,22 @@ useEffect(() => {
         <div className="gallery-grid">
           {filteredImages.map((image) => (
             <div key={image.id} className="gallery-item">
-              <img src={image.image_url} alt={image.caption} loading="lazy"/>
+              <img src={image.image} alt={image.caption} />
               <IconButton
-  component="a" // <-- Make the button act like a link
-  href={image.image_url}// <-- The direct URL to the Cloudinary image
-  download={`${image.caption}.png`} // <-- Suggest a filename to the browser
-  target="_blank" // <-- Helps with compatibility
-  rel="noopener noreferrer" // <-- Good security practice for new tabs
-  sx={{
-    position: 'absolute',
-    bottom: 8,
-    right: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    color: 'white',
-    '&:hover': {
-      backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    },
-  }}
->
-  <DownloadIcon />
-</IconButton>
+                onClick={() => handleDownload(image.image, image.caption)}
+                sx={{
+                  position: "absolute",
+                  bottom: 8,
+                  right: 8,
+                  backgroundColor: "rgba(0, 0, 0, 0.5)",
+                  color: "white",
+                  "&:hover": {
+                    backgroundColor: "rgba(0, 0, 0, 0.7)",
+                  },
+                }}
+              >
+                <DownloadIcon />
+              </IconButton>
             </div>
           ))}
         </div>

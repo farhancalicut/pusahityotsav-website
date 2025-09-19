@@ -1,16 +1,21 @@
-from django.contrib import admin,messages
+# In api/admin.py
+from django.contrib import admin, messages
 from django.db.models import Sum
-from .models import Group, Category, Event, Contestant, Registration, Result, GalleryImage,IndividualChampion
+from django.urls import path, reverse
+from django.shortcuts import render, redirect
+from django.utils.html import format_html
+
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
 from import_export.fields import Field
 from import_export.widgets import ForeignKeyWidget
-from import_export.widgets import ForeignKeyWidget
-from .forms import EventResultForm # Import our new form
-from django.urls import path,reverse
-from django.shortcuts import render, redirect
-from django.utils.html import format_html
 
+from .models import (
+    Group, Category, Event, Contestant, Registration, Result, GalleryImage, IndividualChampion
+)
+from .forms import EventResultForm # Import the one correct form
+
+# --- Import/Export Resource ---
 class ContestantResource(resources.ModelResource):
     group = Field(
         column_name='group',
@@ -34,142 +39,110 @@ class ContestantResource(resources.ModelResource):
         event_names = [reg.event.name for reg in registrations]
         return ", ".join(event_names)
 
+# --- Admin Classes ---
 @admin.register(Group)
 class GroupAdmin(admin.ModelAdmin):
     search_fields = ('name',)
 
-class EventInline(admin.TabularInline):
-    model = Event
-    extra = 1
-    fields = ('name',) 
-
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     search_fields = ('name',)
-    inlines = [EventInline]
 
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
-    list_display = ('name', 'category', 'add_results_button')
-    list_filter = ('category',)
+    # The 'categories' field is now a ManyToManyField
+    list_display = ('name', 'display_categories', 'add_results_button')
+    list_filter = ('categories',) # Filter by the new field
     search_fields = ('name',)
-    autocomplete_fields = ['category']
+    # Use filter_horizontal for a better multi-select UI
+    filter_horizontal = ('categories',)
+
+    def display_categories(self, obj):
+        """Creates a string for the admin list display."""
+        return ", ".join([cat.name for cat in obj.categories.all()])
+    display_categories.short_description = 'Categories'
 
     def get_urls(self):
-        """Adds our custom URL to the admin."""
         urls = super().get_urls()
         custom_urls = [
             path(
                 '<path:object_id>/add-results/',
                 self.admin_site.admin_view(self.add_results_view),
-                name='event_add_results',
+                name='api_event_add_results',
             ),
         ]
         return custom_urls + urls
 
     def add_results_button(self, obj):
-        """A button that links to our custom view."""
-        url = reverse('admin:event_add_results', args=[obj.pk])
+        url = reverse('admin:api_event_add_results', args=[obj.pk])
         return format_html('<a class="button" href="{}">Add/Edit Results</a>', url)
     add_results_button.short_description = 'Manage Results'
-    add_results_button.allow_tags = True
 
     def add_results_view(self, request, object_id):
-        """The main view for handling our custom form."""
         event = self.get_object(request, object_id)
-
         if request.method == 'POST':
-            form = EventResultForm(request.POST)
+            form = EventResultForm(request.POST, event=event)
             if form.is_valid():
-                # Get the data from the form
+                # ... (Your saving logic is correct here)
                 data = form.cleaned_data
-                result_number = data['result_number']
-
-                # List of winners and their positions/points
+                result_number = data.get('result_number')
                 winners_data = [
                     (1, data.get('winner_1'), data.get('points_1')),
                     (2, data.get('winner_2'), data.get('points_2')),
                     (3, data.get('winner_3'), data.get('points_3')),
                 ]
-
-                # Loop through winners and save them
                 for position, registration, points in winners_data:
-                    if registration and points is not None:
+                    if registration:
                         Result.objects.update_or_create(
                             registration=registration,
                             defaults={
                                 'position': position,
-                                'points': points,
+                                'points': points or 0,
                                 'resultNumber': result_number,
                             }
                         )
-
-                self.message_user(request, "Results for {} have been saved successfully.".format(event.name), messages.SUCCESS)
+                self.message_user(request, f"Results for {event.name} saved successfully.", messages.SUCCESS)
                 return redirect(reverse('admin:api_event_changelist'))
-
-        else: # This is a GET request
-            # Pre-populate the form with existing results for this event
-            initial_data = {'event': event, 'result_number': ''}
+        else:
+            initial_data = {}
             existing_results = Result.objects.filter(registration__event=event)
-
             if existing_results.exists():
                 initial_data['result_number'] = existing_results.first().resultNumber
-
             for result in existing_results:
                 if result.position in [1, 2, 3]:
                     initial_data[f'winner_{result.position}'] = result.registration
                     initial_data[f'points_{result.position}'] = result.points
+            form = EventResultForm(initial=initial_data, event=event)
 
-            form = EventResultForm(initial=initial_data)
-
-        context = dict(
-           self.admin_site.each_context(request),
-           opts=self.model._meta,
-           form=form,
-           event=event,
-        )
+        context = self.admin_site.each_context(request)
+        context['opts'] = self.model._meta
+        context['form'] = form
+        context['event'] = event
         return render(request, 'admin/api/event/change_form_results.html', context)
 
-class RegistrationInline(admin.TabularInline):
-    model = Registration
-    extra = 1
-    autocomplete_fields = ['event']
+
 
 @admin.register(Contestant)
-class ContestantAdmin(ImportExportModelAdmin):
+class ContestantAdmin(ImportExportModelAdmin): # <-- This is the key change
     resource_class = ContestantResource
     list_display = ('full_name', 'email', 'group', 'category', 'gender')
     list_filter = ('gender', 'group', 'category')
     search_fields = ('full_name', 'email')
     autocomplete_fields = ['group', 'category']
-    inlines = [RegistrationInline]
-
-class ResultInline(admin.TabularInline):
-    model = Result
-    extra = 0
-    fields = ('position', 'points') 
 
 @admin.register(Registration)
 class RegistrationAdmin(admin.ModelAdmin):
     list_display = ('contestant', 'event')
     search_fields = ('contestant__full_name', 'event__name')
     autocomplete_fields = ['contestant', 'event']
-    inlines = [ResultInline]
 
 @admin.register(Result)
 class ResultAdmin(admin.ModelAdmin):
-    list_display = ('get_contestant_name', 'get_event_name', 'position', 'points')
-    list_filter = ('registration__event__category', 'registration__event__name', 'position')
-    search_fields = ('registration__contestant__full_name',)
-    autocomplete_fields = ['registration']
-    list_display = ('get_contestant_name', 'get_event_name', 'position', 'points', 'resultNumber') # <-- Add here
-    list_filter = ('registration__event__category', 'registration__event__name', 'position')
-    search_fields = ('registration__contestant__full_name', 'resultNumber',) # <-- And also add here
+    list_display = ('get_contestant_name', 'get_event_name', 'position', 'points', 'resultNumber')
+    list_filter = ('registration__event__categories__name', 'position') # Corrected path
+    search_fields = ('registration__contestant__full_name', 'resultNumber',)
     autocomplete_fields = ['registration']
     
-    # It's also good practice to define the fields for the edit form
-    fields = ('registration', 'position', 'points', 'resultNumber')
-
     @admin.display(description='Contestant')
     def get_contestant_name(self, obj):
         return obj.registration.contestant.full_name
@@ -185,30 +158,16 @@ class GalleryImageAdmin(admin.ModelAdmin):
 
 @admin.register(IndividualChampion)
 class IndividualChampionAdmin(admin.ModelAdmin):
-    # Define the columns to display
     list_display = ['full_name', 'group', 'total_points']
 
     def get_queryset(self, request):
-        # Calculate the total points for each contestant
         queryset = super().get_queryset(request)
-        queryset = queryset.annotate(
-            total_points=Sum('registration__result__points')
-        ).order_by('-total_points')
-        return queryset
-
+        return queryset.annotate(total_points=Sum('registration__result__points')).order_by('-total_points')
+    
     @admin.display(description='Total Points', ordering='total_points')
     def total_points(self, obj):
-        # Helper to display the annotated field
         return obj.total_points
-
-    def has_add_permission(self, request):
-        # This is a read-only page, so disable the "Add" button
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        # Disable editing
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        # Disable deleting
-        return False
+    
+    def has_add_permission(self, request): return False
+    def has_change_permission(self, request, obj=None): return False
+    def has_delete_permission(self, request, obj=None): return False

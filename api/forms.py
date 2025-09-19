@@ -1,38 +1,32 @@
-# in forms.py (new file)
-
+# In api/forms.py
 from django import forms
-from .models import Event, Registration
+from .models import Registration, Event, Contestant
 
 class EventResultForm(forms.Form):
-    event = forms.ModelChoiceField(
-        queryset=Event.objects.all(),
-        # --- ADD THIS WIDGET ---
-        widget=forms.HiddenInput()
-    )
+    winner_1 = forms.ModelChoiceField(queryset=Registration.objects.none(), required=False, label="Winner 1st Place")
+    points_1 = forms.IntegerField(required=False, label="Points for 1st")
 
-    # Fields for 1st Place
-    winner_1 = forms.ModelChoiceField(queryset=Registration.objects.none(), label="1st Place Winner")
-    points_1 = forms.IntegerField(label="1st Place Points")
+    winner_2 = forms.ModelChoiceField(queryset=Registration.objects.none(), required=False, label="Winner 2nd Place")
+    points_2 = forms.IntegerField(required=False, label="Points for 2nd")
 
-    # Fields for 2nd Place
-    winner_2 = forms.ModelChoiceField(queryset=Registration.objects.none(), label="2nd Place Winner", required=False)
-    points_2 = forms.IntegerField(label="2nd Place Points", required=False)
+    winner_3 = forms.ModelChoiceField(queryset=Registration.objects.none(), required=False, label="Winner 3rd Place")
+    points_3 = forms.IntegerField(required=False, label="Points for 3rd")
 
-    # Fields for 3rd Place
-    winner_3 = forms.ModelChoiceField(queryset=Registration.objects.none(), label="3rd Place Winner", required=False)
-    points_3 = forms.IntegerField(label="3rd Place Points", required=False)
-
-    # Field for the shared Result Number
-    result_number = forms.CharField(label="Result Number", max_length=100)
+    result_number = forms.CharField(max_length=100, required=False, label="Result Number")
 
     def __init__(self, *args, **kwargs):
+        # Get the event object passed from the admin view
+        event = kwargs.pop('event', None)
         super().__init__(*args, **kwargs)
-        if 'event' in self.data:
-            try:
-                event_id = int(self.data.get('event'))
-                registrations_queryset = Registration.objects.filter(event_id=event_id)
-                self.fields['winner_1'].queryset = registrations_queryset
-                self.fields['winner_2'].queryset = registrations_queryset
-                self.fields['winner_3'].queryset = registrations_queryset
-            except (ValueError, TypeError):
-                pass
+
+        if event:
+            # This is the single source of truth for our queryset
+            registrations = Registration.objects.filter(event=event).select_related('contestant', 'contestant__category')
+
+            # Apply this queryset to all three winner dropdowns
+            for i in range(1, 4):
+                self.fields[f'winner_{i}'].queryset = registrations
+                # Customize the display to show the contestant's name and their category
+                self.fields[f'winner_{i}'].label_from_instance = (
+                    lambda obj: f"{obj.contestant.full_name} ({obj.contestant.category.name})"
+                )

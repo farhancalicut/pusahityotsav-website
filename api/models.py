@@ -20,13 +20,14 @@ class Category(models.Model):
         return self.name
 
 class Event(models.Model):
-    """Represents a single competition, linked to a Category."""
-    name = models.CharField(max_length=200)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='events')
-    rules = models.TextField(blank=True, null=True)
-    
+    name = models.CharField(max_length=100)
+    # This is the key change: an event can now belong to many categories.
+    categories = models.ManyToManyField(Category, related_name='events')
+
+    # We are removing the old 'category' ForeignKey and the 'is_general' BooleanField.
+
     def __str__(self):
-        return f"{self.name} ({self.category.name})"
+        return self.name
 
 class Contestant(models.Model):
     """Represents a registered student."""
