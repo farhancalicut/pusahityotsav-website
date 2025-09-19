@@ -84,7 +84,7 @@ function Footer() {
                 <XIcon />
               </IconButton> */}
               <IconButton
-                href="https://chat.whatsapp.com/JX3jdMNIOJaLUnwVSAXvH8?mode=ems_copy_t"
+                href="https://chat.whatsapp.com/CLtEVLigf2fJwZJM0Z5B9v?mode=ems_copy_c"
                 target="_blank"
                 sx={{ color: "white" }}
               >
