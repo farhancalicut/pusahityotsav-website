@@ -6,6 +6,7 @@ import {
   RadioGroup, FormControlLabel, Radio, FormControl, FormLabel, FormGroup,
   Checkbox, Link, InputLabel, Select, CircularProgress,
 } from "@mui/material";
+import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import API_BASE_URL from '../apiConfig';
 
 const steps = ["Personal Details", "Select Category", "Choose Competitions"];
@@ -198,6 +199,19 @@ function RegistrationPage() {
         );
       case 1:
         return (
+          <>
+          <Paper elevation={0} sx={{ mt: 2, borderRadius: 2, overflow: "hidden", border: "1px solid #ddd" }}>
+              <Box sx={{ backgroundColor: "#1a5b00ff", color: "white", px: 2, py: 1.5 }}>
+                <Typography variant="h6">Note</Typography>
+              </Box>
+              <Box sx={{ p: 2, backgroundColor: "#f5f5f5" }}>
+                <Typography>
+                  Category A - UG<br />
+                  Category B - PG & PhD<br />
+                </Typography>
+              </Box>
+            </Paper>
+
           <FormControl fullWidth required sx={{ mt: 2 }}>
             <InputLabel>Your Category</InputLabel>
             <Select name="categoryId" value={formData.categoryId} label="Your Category" onChange={handleChange}>
@@ -206,6 +220,7 @@ function RegistrationPage() {
               ))}
             </Select>
           </FormControl>
+          </>
         );
       case 2:
         return (
@@ -248,16 +263,33 @@ function RegistrationPage() {
   };
 
   return (
-    <Box sx={{ display: "flex", justifyContent: "center", py: 5 }}>
-      <Paper elevation={6} sx={{ p: { xs: 3, md: 5 }, borderRadius: 4, maxWidth: "600px", width: "100%" }}>
+    <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
+      <Paper
+        // elevation={1}
+        sx={{
+          p: { xs: 6, md: 5 }, // smaller padding on mobile
+          borderRadius: 2,
+          maxWidth: { xs: '90%', sm: '80%', md: '600px' }, // responsive width
+          width: '100%',
+        }}
+      >
         {isSuccess ? (
           <Box sx={{ textAlign: "center" }}>
             <Typography variant="h5" sx={{ fontWeight: "bold", color: "green", mb: 2 }}>Congratulations!</Typography>
             <Typography>You are successfully registered for PU Sahithyolsav.</Typography>
             <Typography sx={{ my: 2 }}>
-              Please join this WhatsApp group for program updates:
-              <Link href="https://chat.whatsapp.com/JX3jdMNIOJaLUnwVSAXvH8?mode=ems_copy_t" target="_blank"> Join Group</Link>
-            </Typography>
+                Please join this WhatsApp group for program updates:<br /><br />
+                <Button
+                  variant="contained"
+                  color="success"
+                  startIcon={<WhatsAppIcon />}
+                  href="https://chat.whatsapp.com/CLtEVLigf2fJwZJM0Z5B9v?mode=ems_copy_c"
+                  target="_blank"
+                  sx={{ ml: 2 }}
+                >
+                  Join Group
+                </Button>
+              </Typography>
             <Typography>Thank you for participating, wishing you all the best.</Typography>
             <Button variant="contained" onClick={handleReset} sx={{ mt: 4 }}>Register Another Participant</Button>
           </Box>
