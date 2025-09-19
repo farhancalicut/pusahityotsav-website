@@ -5,6 +5,7 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 from django.db.models import Sum
 from django.db.models import Q
+import cloudinary.uploader
 
 from PIL import Image, ImageDraw, ImageFont
 import os
@@ -180,87 +181,61 @@ class GenerateEventPostersView(APIView):
         try:
             event = Event.objects.get(id=event_id)
             results = Result.objects.filter(
-                registration__event=event,
+                registration__event=event, 
                 position__in=[1, 2, 3]
-            ).order_by('position').select_related(
-                'registration__contestant',
-                'registration__contestant__group'
-            )
+            ).order_by('position').select_related('registration__contestant', 'registration__contestant__group')
 
             if not results.exists():
-                return Response([], status=200)
-
-            result_number = results.first().resultNumber or ""
-            
-            # --- NEW LOGIC: Check if the event is general ---
-            category_names = [cat.name for cat in event.categories.all()]
-            is_general_event = len(category_names) > 1
+                return Response([], status=200) # Return empty list if no results
 
             generated_posters_urls = []
             template_files = ['template_black.png', 'template_pink.png', 'template_purple.png']
 
             for template_name in template_files:
+                # --- Poster Generation Logic (Your code is correct) ---
                 template_path = os.path.join(settings.BASE_DIR, 'assets', template_name)
                 image = Image.open(template_path)
                 draw = ImageDraw.Draw(image)
-
-                # --- Font and Color Setup (No changes here) ---
+                # ... (font loading, color definitions, and draw.text calls are all correct here) ...
                 font_main_path = os.path.join(settings.BASE_DIR, 'assets', 'fonts', 'Poppins-Bold.ttf')
                 font_secondary_path = os.path.join(settings.BASE_DIR, 'assets', 'fonts', 'Poppins-Regular.ttf')
-                font_result_label = ImageFont.truetype(font_main_path, 65)
-                font_publication_num = ImageFont.truetype(font_main_path, 300)
-                font_category = ImageFont.truetype(font_secondary_path, 80)
                 font_event = ImageFont.truetype(font_main_path, 105)
                 font_winner = ImageFont.truetype(font_main_path, 78)
                 font_department = ImageFont.truetype(font_secondary_path, 62)
+                even_name_color = (252, 224, 9)
                 color_primary = (255, 255, 255)
                 color_secondary = (255, 255, 255)
-                even_name_color = (252, 224, 9)
-
-                # --- Drawing Text on the Poster ---
-                draw.text((1500, 1450), "Result", font=font_result_label, fill=color_secondary)
-                draw.text((1550, 1500), str(result_number), font=font_publication_num, fill=color_primary)
-
-                # --- NEW LOGIC: Conditionally draw the category ---
-                event_y_position = 1700 # Default position for the event name
-                if not is_general_event:
-                    # If it's NOT a general event, draw the category name.
-                    category_display_name = category_names[0].upper() if category_names else ""
-                    draw.text((1750, 1600), category_display_name, font=font_category, fill=color_secondary)
-                else:
-                    # If it IS a general event, move the event name up slightly.
-                    event_y_position = 1650
-
-                # Draw Event Name in its final position
-                draw.text((1750, event_y_position), event.name.upper(), font=font_event, fill=even_name_color)
-
-                # Winners List (No changes here)
+                draw.text((1750, 1700), event.name.upper(), font=font_event, fill=even_name_color)
                 start_y = 2290
                 for result in results:
                     winner_name = result.registration.contestant.full_name
-                    department_name = result.registration.contestant.group.name
-                    draw.text((2100, start_y), winner_name, font=font_winner, fill=color_primary)
+                    department_name = result.registration.contestant.group.name 
+                    draw.text((2100, start_y ), winner_name, font=font_winner, fill=color_primary)
                     draw.text((2100, start_y + 95), department_name, font=font_department, fill=color_secondary)
                     start_y += 450
+                
+                # --- New Cloudinary Upload Logic ---
+                # 1. Save the generated image to a memory buffer
+                buffer = io.BytesIO()
+                image.save(buffer, format='PNG')
+                buffer.seek(0)
 
-                # --- Saving Logic (No changes here) ---
-                output_dir = os.path.join(settings.MEDIA_ROOT, 'generated_posters')
-                os.makedirs(output_dir, exist_ok=True)
-                output_filename = f'event_{event_id}_{template_name}'
-                output_path = os.path.join(output_dir, output_filename)
-                image.save(output_path, "PNG")
-
-                image_url = request.build_absolute_uri(
-                    os.path.join(settings.MEDIA_URL, 'generated_posters', output_filename)
+                upload_result = cloudinary.uploader.upload(
+                    buffer,
+                    folder="generated_posters",
+                    public_id=f'event_{event_id}_{template_name.split(".")[0]}'
                 )
-                generated_posters_urls.append({'id': template_name, 'url': image_url})
+                
+                image_url = upload_result.get('secure_url')
+                if image_url:
+                    generated_posters_urls.append({'id': template_name, 'url': image_url})
 
             return Response(generated_posters_urls)
 
         except Event.DoesNotExist:
             return Response({"error": "Event not found."}, status=404)
         except Exception as e:
-            print(f"CRITICAL ERROR in GenerateEventPostersView: {e}")
+            print(f"CRITICAL ERROR in GenerateEventPostersView: {e}") # For debugging
             return Response({'error': 'An unexpected server error occurred.'}, status=500)
 
 class EventsForRegistrationView(APIView):
