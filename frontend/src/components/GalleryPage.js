@@ -97,7 +97,7 @@ function GalleryPage() {
         <div className="gallery-grid">
           {filteredImages.map((image) => (
             <div key={image.id} className="gallery-item">
-              <img src={image.image} alt={image.caption} />
+              <img src={image.image_url} alt={image.caption} />
               <IconButton
                 onClick={() => handleDownload(image.image, image.caption)}
                 sx={{

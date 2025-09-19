@@ -267,9 +267,9 @@ function RegistrationPage() {
       <Paper
         // elevation={1}
         sx={{
-          p: { xs: 6, md: 5 }, // smaller padding on mobile
-          borderRadius: 2,
-          maxWidth: { xs: '90%', sm: '80%', md: '600px' }, // responsive width
+          p: { xs: 3, md: 5 }, // smaller padding on mobile
+          borderRadius: 0.5,
+          maxWidth: { xs: '95%', sm: '80%', md: '600px' }, // responsive width
           width: '100%',
         }}
       >
