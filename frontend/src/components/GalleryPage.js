@@ -1,7 +1,9 @@
 // frontend/src/components/GalleryPage.js
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { Box, Typography, FormControl, InputLabel, Select, MenuItem, IconButton } from "@mui/material";
+import {
+  Box, Typography, FormControl, InputLabel, Select, MenuItem, IconButton,
+} from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
 import "./GalleryPage.css";
 import API_BASE_URL from "../apiConfig";
@@ -13,17 +15,22 @@ function GalleryPage() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
   useEffect(() => {
-    axios.get(`${API_BASE_URL}/api/gallery/`)
+    axios
+      .get(`${API_BASE_URL}/api/gallery/`)
       .then((response) => {
         setImages(response.data);
+        
         const currentYear = new Date().getFullYear();
         const uniqueYears = [...new Set(response.data.map((img) => img.year))].sort((a, b) => b - a);
         setYears(uniqueYears);
+
         const yearToFilter = uniqueYears.includes(currentYear) ? currentYear : (uniqueYears[0] || '');
         setSelectedYear(yearToFilter);
         setFilteredImages(response.data.filter((img) => img.year === yearToFilter));
       })
-      .catch((error) => console.error("Error fetching gallery images!", error));
+      .catch((error) => {
+        console.error("Error fetching gallery images!", error);
+      });
   }, []);
 
   const handleYearChange = (event) => {
@@ -39,7 +46,9 @@ function GalleryPage() {
         <FormControl sx={{ minWidth: 120 }} size="small">
           <InputLabel>Year</InputLabel>
           <Select value={selectedYear} label="Year" onChange={handleYearChange}>
-            {years.map((year) => (<MenuItem key={year} value={year}>{year}</MenuItem>))}
+            {years.map((year) => (
+              <MenuItem key={year} value={year}>{year}</MenuItem>
+            ))}
           </Select>
         </FormControl>
       </Box>
@@ -48,9 +57,22 @@ function GalleryPage() {
         <div className="gallery-grid">
           {filteredImages.map((image) => (
             <div key={image.id} className="gallery-item">
+              {/* Use image.image directly, which will now be the full Cloudinary URL */}
               <img src={image.image} alt={image.caption} />
-              <IconButton component="a" href={image.image} download={`${image.caption}.png`} target="_blank" rel="noopener noreferrer"
-                sx={{ position: "absolute", bottom: 8, right: 8, backgroundColor: "rgba(0, 0, 0, 0.5)", color: "white", "&:hover": { backgroundColor: "rgba(0, 0, 0, 0.7)" }}}>
+              
+              {/* Use a simple link for downloading, which is more reliable */}
+              <IconButton
+                component="a"
+                href={image.image}
+                download={`${image.caption}.png`}
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{
+                  position: "absolute", bottom: 8, right: 8,
+                  backgroundColor: "rgba(0, 0, 0, 0.5)", color: "white",
+                  "&:hover": { backgroundColor: "rgba(0, 0, 0, 0.7)" },
+                }}
+              >
                 <DownloadIcon />
               </IconButton>
             </div>
