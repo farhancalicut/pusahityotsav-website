@@ -32,7 +32,7 @@ function AppBarComponent() {
 
   const navLinks = [
     { title: "Home", path: "/" },
-    // { title: "Dashboard", path: "/dashboard" },
+    { title: "Posters", path: "/dashboard" },
     { title: "About", path: "/about" },
     { title: "Gallery", path: "/gallery" },
     { title: "Scoreboard", path: "/Scoreboard" },

@@ -6,7 +6,7 @@ import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import CountUp from "react-countup";
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
-import apiConfig from '../apiConfig'; 
+import API_BASE_URL from '../apiConfig'; 
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -46,7 +46,7 @@ function Scoreboard() {
 
   const fetchPoints = async () => {
     try {
-      const response = await axios.get(`${apiConfig.API_BASE_URL}/points/`);
+      const response = await axios.get(`${API_BASE_URL}/points/`);
       setPoints(response.data || []);
     } catch (error) {
       console.error("Error fetching points!", error);

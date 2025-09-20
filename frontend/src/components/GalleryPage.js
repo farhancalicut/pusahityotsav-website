@@ -6,7 +6,7 @@ import {
 } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
 import "./GalleryPage.css";
-import apiConfig from "../apiConfig";
+import API_BASE_URL from "../apiConfig";
 
 function GalleryPage() {
   const [images, setImages] = useState([]);
@@ -39,7 +39,7 @@ function GalleryPage() {
 
   useEffect(() => {
     axios
-      .get(`${apiConfig.API_BASE_URL}/gallery/`)
+      .get(`${API_BASE_URL}/gallery/`)
       .then((response) => {
         setImages(response.data);
         

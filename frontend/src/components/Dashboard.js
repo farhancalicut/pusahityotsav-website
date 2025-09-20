@@ -1,7 +1,7 @@
 // frontend/src/components/Dashboard.js
 import React, { useState, useEffect, useRef } from 'react';
 import { Box, Container, Typography, Paper } from '@mui/material';
-import apiConfig from '../apiConfig';
+import API_BASE_URL from '../apiConfig';
 
 function Dashboard() {
   const [carouselImages, setCarouselImages] = useState([]);
@@ -15,7 +15,7 @@ function Dashboard() {
 
   const fetchCarouselImages = async () => {
     try {
-      const response = await fetch(`${apiConfig.API_BASE_URL}/carousel/`);
+      const response = await fetch(`${API_BASE_URL}/carousel/`);
       if (!response.ok) {
         throw new Error(`Failed to fetch carousel images. Status: ${response.status}`);
       }
