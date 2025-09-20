@@ -52,8 +52,13 @@ class ResultSerializer(serializers.ModelSerializer):
             'event_name',
             'group_name'
         ]
+# In api/serializers.py
+
 class GalleryImageSerializer(serializers.ModelSerializer):
+    # This new field will show us the raw value from the database
+    raw_image_path_debug = serializers.CharField(source='image.name', read_only=True)
+
     class Meta:
         model = GalleryImage
-        # 'image' will now automatically contain the full Cloudinary URL
-        fields = ['id', 'image', 'caption', 'year']
+        # 'image' will be the final URL, 'raw_image_path_debug' is for our test
+        fields = ['id', 'image', 'caption', 'year', 'raw_image_path_debug']
