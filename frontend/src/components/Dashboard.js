@@ -83,7 +83,7 @@ function Dashboard() {
               className="slide-track"
               style={{
                 width: `${carouselImages.length * 100}%`,
-                transform: `translateX(-${currentImageIndex * 100}%)`,
+                transform: `translateX(-${(currentImageIndex * 100) / carouselImages.length}%)`,
               }}
             >
               {carouselImages.map((image, index) => (
