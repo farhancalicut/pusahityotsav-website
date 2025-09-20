@@ -11,7 +11,8 @@ from .views import (
     GenerateEventPostersView,
     RegistrationViewSet,
     EventsForRegistrationView,
-    debug_cloudinary_vars # <-- 1. ADD THIS IMPORT
+    debug_cloudinary_vars,
+    debug_gallery_images # <-- ADD THIS NEW IMPORT
 )
 from . import views
 
@@ -30,6 +31,7 @@ urlpatterns = [
     path('generate-event-posters/<int:event_id>/', GenerateEventPostersView.as_view(), name='generate-event-posters'),
     path('events-for-registration/<int:category_id>/', EventsForRegistrationView.as_view(), name='events-for-registration'),
 
-    # 2. ADD THIS NEW LINE AT THE BOTTOM
+    # Debug endpoints
     path('debug-vars/', debug_cloudinary_vars, name='debug-vars'),
+    path('debug-gallery/', debug_gallery_images, name='debug-gallery'),
 ]

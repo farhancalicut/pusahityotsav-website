@@ -272,3 +272,36 @@ def debug_cloudinary_vars(request):
     print("--- CLOUDINARY DEBUG END ---")
 
     return HttpResponse("Debug information has been printed to the Render logs. Please check them now.")
+
+def debug_gallery_images(request):
+    """
+    Debug endpoint to see what's happening with gallery images
+    """
+    from .models import GalleryImage
+    from .serializers import GalleryImageSerializer
+    import os
+    
+    debug_info = {
+        'cloudinary_env_vars': {
+            'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
+            'API_KEY': os.environ.get('CLOUDINARY_API_KEY', 'Not set'),
+            'API_SECRET': 'Set' if os.environ.get('CLOUDINARY_API_SECRET') else 'Not set'
+        },
+        'total_images': GalleryImage.objects.count(),
+        'sample_images': []
+    }
+    
+    # Get first 3 images for debugging
+    sample_images = GalleryImage.objects.all()[:3]
+    for img in sample_images:
+        serializer = GalleryImageSerializer(img)
+        debug_info['sample_images'].append({
+            'id': img.id,
+            'caption': img.caption,
+            'year': img.year,
+            'raw_image_name': img.image.name,
+            'raw_image_url': img.image.url,
+            'serialized_data': serializer.data
+        })
+    
+    return Response(debug_info)
