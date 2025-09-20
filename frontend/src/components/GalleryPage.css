@@ -9,21 +9,29 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 20px;
+  /* Use masonry-like layout for different aspect ratios */
+  align-items: start;
 }
 
 .gallery-item {
-  /* --- THIS IS THE KEY CHANGE --- */
-  position: relative; /* This allows us to position children inside it */
+  position: relative;
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+}
+
+.gallery-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .gallery-item img {
   width: 100%;
-  height: 250px;
-  object-fit: cover;
+  height: auto; /* This allows natural aspect ratio */
+  object-fit: contain; /* Show full image without cropping */
   display: block;
+  max-height: 400px; /* Optional: set a max height to prevent very tall images */
 }
 
 /* The old .caption style is no longer needed */

@@ -31,11 +31,11 @@ function Footer() {
         {/* THIS IS THE KEY CHANGE */}
         <Grid
           container
-          spacing={4}
-          alignItems="center"
+          spacing={2}
+          alignItems="flex-start"
           justifyContent="space-between"
         >
-          <Grid xs={12} sm="auto">
+          <Grid item xs={12} md={6}>
             <Typography variant="h6" gutterBottom sx={{ fontWeight: "bold" }}>
               Contact Us
             </Typography>
@@ -47,22 +47,33 @@ function Footer() {
               sx={{ color: "#bdbdbd", fontSize: "0.65rem" }}
             >
               Email: ssfpondicherryuniversity@gmail.com
-              {/* <br />
-              DeveloperId: muhammedfarhant6@gmail.com */}
+              <br />
+              DevId: muhammedfarhant6@gmail.com
             </Typography>
           </Grid>
 
-          {/* Column 2: Social Media - "item" prop removed */}
+          {/* Column 2: Social Media - New row on mobile, right side on desktop */}
           <Grid
+            item
             xs={12}
-            sm="auto"
+            md={6}
             sx={{
               display: "flex",
               flexDirection: "column",
-              alignItems: { xs: "flex-start", sm: "flex-end" },
+              alignItems: { xs: "flex-start", md: "flex-end" },
+              justifyContent: { xs: "flex-start", md: "center" },
             }}
           >
-            <Box>
+            <Box
+  sx={{
+    display: "flex",
+    alignItems: "center",
+    gap: 1,
+    mb: 1,
+    ml: { xs: -1, md: 1 }, // adds left margin on mobile and desktop
+  }}
+>
+
               <IconButton
                 href="https://www.instagram.com/ssfpondicherryuniversity?utm_source=ig_web_button_share_sheet&igsh=MXZ3dHBpZjI3NHZnZQ=="
                 target="_blank"
@@ -93,7 +104,10 @@ function Footer() {
             </Box>
             <Typography
               variant="body2"
-              sx={{ color: "#bdbdbd", mt: 0, pl: { xs: 1, md: 1 } }}
+              sx={{ 
+                color: "#bdbdbd",
+                textAlign: { xs: "left", md: "right" }
+              }}
             >
               © 2025 SSF PU
             </Typography>

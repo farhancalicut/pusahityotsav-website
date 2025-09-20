@@ -14,6 +14,29 @@ function GalleryPage() {
   const [years, setYears] = useState([]);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
+  // Function to handle direct image download
+  const handleDownload = async (imageUrl, caption) => {
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${caption}.jpg`; // Set the filename
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up the object URL
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download failed:', error);
+      // Fallback to opening in new tab
+      window.open(imageUrl, '_blank');
+    }
+  };
+
   useEffect(() => {
     axios
       .get(`${API_BASE_URL}/api/gallery/`)
@@ -68,13 +91,9 @@ function GalleryPage() {
                 loading="lazy"
               />
               
-              {/* Use a simple link for downloading, which is the most reliable method */}
+              {/* Direct download button */}
               <IconButton
-                component="a"
-                href={image.image}
-                download={`${image.caption}.png`}
-                target="_blank"
-                rel="noopener noreferrer"
+                onClick={() => handleDownload(image.image, image.caption)}
                 sx={{
                   position: "absolute", bottom: 8, right: 8,
                   backgroundColor: "rgba(0, 0, 0, 0.5)", color: "white",
