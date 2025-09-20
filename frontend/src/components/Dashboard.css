@@ -4,7 +4,8 @@
 */
 @font-face {
   font-family: 'Poppins-Bold';
-  src: url('d:\pusahityotsav\frontend\public\fonts\Poppins-Bold.ttf') format('truetype');
+  /* This URL works because the 'public' folder becomes the website's root */
+  src: url('/fonts/Poppins-Bold.ttf') format('truetype');
   font-weight: bold;
   font-style: normal;
 }

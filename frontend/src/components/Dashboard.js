@@ -65,7 +65,7 @@ function Dashboard() {
           component="h1"
           sx={{
             textAlign: 'center',
-            mb: 2, // Adjusted margin for better spacing
+            mb: 1, // Adjusted margin for better spacing
             fontWeight: 'bold',
             fontFamily: 'Poppins-Bold, sans-serif', // Correct font family usage
             color: '#1e1e1eff',
