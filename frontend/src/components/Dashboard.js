@@ -31,7 +31,7 @@ function Dashboard() {
 
     const interval = setInterval(() => {
       setCurrentImageIndex((prevIndex) => (prevIndex + 1) % carouselImages.length);
-    }, 5000); // Change image every 5 seconds
+    }, 3000); // Change image every 5 seconds
 
     return () => clearInterval(interval);
   }, [carouselImages]);
