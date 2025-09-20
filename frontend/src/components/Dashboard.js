@@ -1,67 +1,49 @@
-// frontend/src/components/Dashboard.js
 import React, { useState, useEffect } from 'react';
-import { Box, Container, Typography } from '@mui/material';
+import { Box, Container, Typography, CircularProgress } from '@mui/material';
+import axios from 'axios'; // Use Axios for consistency
 import API_BASE_URL from '../apiConfig';
+import './Dashboard.css'; // Import the new CSS file
 
 function Dashboard() {
   const [carouselImages, setCarouselImages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isSliding, setIsSliding] = useState(false);
 
   useEffect(() => {
+    const fetchCarouselImages = async () => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/api/carousel/`);
+        setCarouselImages(response.data);
+      } catch (err) {
+        console.error('Error fetching carousel images:', err);
+        setError(`Failed to load carousel images.`);
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchCarouselImages();
   }, []);
 
-  const fetchCarouselImages = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/carousel/`);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch carousel images. Status: ${response.status}`);
-      }
-      const data = await response.json();
-      setCarouselImages(data);
-    } catch (err) {
-      console.error('Error fetching carousel images:', err);
-      setError(`Failed to load carousel images: ${err.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Auto-advance to next image with slide effect
+  // Auto-advance to the next image
   useEffect(() => {
-    if (carouselImages.length === 0) return;
+    if (carouselImages.length <= 1) return;
 
     const interval = setInterval(() => {
-      setIsSliding(true);
-      
-      setTimeout(() => {
-        setCurrentImageIndex((prevIndex) => 
-          (prevIndex + 1) % carouselImages.length
-        );
-        setIsSliding(false);
-      }, 500); // Half of the slide duration
+      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % carouselImages.length);
     }, 5000); // Change image every 5 seconds
 
     return () => clearInterval(interval);
   }, [carouselImages]);
 
   const handleDotClick = (index) => {
-    if (index !== currentImageIndex) {
-      setIsSliding(true);
-      setTimeout(() => {
-        setCurrentImageIndex(index);
-        setIsSliding(false);
-      }, 500);
-    }
+    setCurrentImageIndex(index);
   };
 
   if (loading) {
     return (
       <Box sx={{ py: 8, textAlign: 'center' }}>
-        <Typography variant="h6">Loading...</Typography>
+        <CircularProgress />
       </Box>
     );
   }
@@ -74,177 +56,77 @@ function Dashboard() {
     );
   }
 
-  if (carouselImages.length === 0) {
-    return (
-      <Box sx={{ py: 8, textAlign: 'center' }}>
-        <Typography variant="h6" color="text.secondary">
-          No images available
-        </Typography>
-      </Box>
-    );
-  }
-
   return (
-    <Box sx={{ py: { xs: 1, md: 2 }, backgroundColor: '#FFD700', minHeight: '80vh' }}>
-      <Container maxWidth="md" sx={{ px: { xs: 2, sm: 3, md: 4 } }}>
-        <Typography 
-          variant="h4" 
-          component="h1" 
-          sx={{ 
-            textAlign: 'center', 
-            mb: { xs: 1, md: 1 }, 
-            mt: { xs: 1.5, md: 1.5 },
+    // Use a full-width Box instead of Container to remove side padding
+    <Box sx={{ py: 2, backgroundColor: '#FFD700' }}>
+      <Container maxWidth="lg">
+        <Typography
+          variant="h4"
+          component="h1"
+          sx={{
+            textAlign: 'center',
+            mb: 2, // Adjusted margin for better spacing
             fontWeight: 'bold',
-            fontFamily: 'Poppins-Bold',
+            fontFamily: 'Poppins-Bold, sans-serif', // Correct font family usage
             color: '#1e1e1eff',
             fontSize: { xs: '1.5rem', md: '2rem' }
           }}
         >
-          
-         - Updates -
+          - Updates -
         </Typography>
+      </Container>
+      
+      {carouselImages.length > 0 ? (
+        <>
+          <Box className="slide-container">
+            <Box
+              className="slide-track"
+              style={{
+                width: `${carouselImages.length * 100}%`,
+                transform: `translateX(-${(currentImageIndex * 100) / carouselImages.length}%)`,
+              }}
+            >
+              {carouselImages.map((image) => (
+                <Box key={image.id} className="slide-item">
+                  <img
+                    src={image.image}
+                    alt="Carousel slide"
+                    className="slide-image"
+                    onError={(e) => console.error('Image failed to load:', image.image)}
+                  />
+                </Box>
+              ))}
+            </Box>
+          </Box>
 
-        <style jsx>{`
-          @font-face {
-            font-family: 'Poppins-Bold';
-            src: url('./assets/fonts/Poppins-Bold.ttf') format('truetype');
-            font-weight: bold;
-            font-style: normal;
-          }
-          
-          .slide-container {
-            position: relative;
-            overflow: hidden;
-            width: 90%;
-            height: 90vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 0 auto;
-          }
-          
-          .slide-track {
-            display: flex;
-            width: ${carouselImages.length * 100}%;
-            height: 100%;
-            transform: translateX(-${currentImageIndex * 100}%);
-            transition: transform 1s ease-in-out;
-          }
-          
-          .slide-item {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-shrink: 0;
-            padding: 15px;
-          }
-          
-          .slide-image {
-            max-width: 90%;        /* Reduce from 100% to make smaller */
-            max-height: 90%;       /* Reduce from 100% to make smaller */
-            width: auto;
-            height: auto;
-            object-fit: contain;
-            display: block;
-            border-radius: 20px;   /* Increase for more rounded corners */
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-          }
-          
-          /* Mobile specific styles */
-          @media (max-width: 768px) {
-            .slide-container {
-              height: 80vh;
-            }
-            
-            .slide-item {
-              padding: 12px;
-            }
-            
-            .slide-image {
-              border-radius: 20px;
-            }
-          }
-          
-          /* Small mobile devices */
-          @media (max-width: 480px) {
-            .slide-container {
-              height: 80vh;
-            }
-            
-            .slide-item {
-              padding: 10px;
-            }
-            
-            .slide-image {
-              border-radius: 15px;
-            }
-          }
-        `}</style>
-        
-        <Box className="slide-container">
-          <Box className="slide-track">
-            {carouselImages.map((image, index) => (
-              <Box key={image.id} className="slide-item">
-                <img
-                  src={image.image}
-                  alt={`Slide ${index + 1}`}
-                  className="slide-image"
-                  onError={(e) => {
-                    console.error('Image failed to load:', image.image);
-                    e.target.style.display = 'none';
+          {/* Simplified Image indicators */}
+          {carouselImages.length > 1 && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2, gap: 1.5 }}>
+              {carouselImages.map((_, index) => (
+                <Box
+                  key={index}
+                  onClick={() => handleDotClick(index)}
+                  sx={{
+                    width: 12,
+                    height: 12,
+                    borderRadius: '50%',
+                    backgroundColor: index === currentImageIndex ? '#1976d2' : '#ccc',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.3s ease',
+                    '&:hover': {
+                      backgroundColor: '#999',
+                    },
                   }}
                 />
-              </Box>
-            ))}
-          </Box>
-        </Box>
-
-        {/* Image indicators */}
-        {carouselImages.length > 1 && (
-          <Box 
-            sx={{ 
-              display: 'flex', 
-              justifyContent: 'center', 
-              mt: { xs: 1.5, md: 2 },
-              mb: { xs: 1, md: 1.5 },
-              gap: { xs: 0.8, md: 1.2 },
-              pb: 1
-            }}
-          >
-            {carouselImages.map((_, index) => (
-              <Box
-                key={index}
-                onClick={() => handleDotClick(index)}
-                sx={{
-                  width: { xs: 10, md: 12 },
-                  height: { xs: 10, md: 12 },
-                  borderRadius: '50%',
-                  backgroundColor: index === currentImageIndex ? '#1976d2' : '#ccc',
-                  cursor: 'pointer',
-                  transition: 'background-color 0.3s ease',
-                  '&:hover': {
-                    backgroundColor: index === currentImageIndex ? '#1976d2' : '#999'
-                  },
-                  // Larger touch target for mobile
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    width: { xs: 24, md: 20 },
-                    height: { xs: 24, md: 20 },
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    display: { xs: 'block', md: 'none' }
-                  },
-                  position: 'relative'
-                }}
-              />
-            ))}
-          </Box>
-        )}
-      </Container>
+              ))}
+            </Box>
+          )}
+        </>
+      ) : (
+        <Typography sx={{ textAlign: 'center', py: 5 }} color="text.secondary">
+          No images available
+        </Typography>
+      )}
     </Box>
   );
 }
