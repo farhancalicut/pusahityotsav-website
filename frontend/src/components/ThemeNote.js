@@ -40,7 +40,7 @@ function ThemeNote() {
             variant="h6"
             sx={{ fontWeight: "bold", mb: 3, color: "#fffb00ff", textAlign: { xs: "center", md: "left" } }}
           >
-            Theme Note: Chronicling the Coromandel
+            Theme Note:<br /> Chronicling the Coromandel
           </Typography>
           <Typography variant="body1" sx={{ lineHeight: 1.8, mb: 3, textAlign: { xs: "justify", md: "left" } }}>
             This year, Pondicherry University adds a unique dimension to SSF

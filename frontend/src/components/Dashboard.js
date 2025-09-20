@@ -1,13 +1,14 @@
 // frontend/src/components/Dashboard.js
-import React, { useState, useEffect, useRef } from 'react';
-import { Box, Container, Typography, Paper } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Box, Container, Typography } from '@mui/material';
 import API_BASE_URL from '../apiConfig';
 
 function Dashboard() {
   const [carouselImages, setCarouselImages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const scrollContainerRef = useRef(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isSliding, setIsSliding] = useState(false);
 
   useEffect(() => {
     fetchCarouselImages();
@@ -29,53 +30,38 @@ function Dashboard() {
     }
   };
 
-  // Auto-scroll effect
+  // Auto-advance to next image with slide effect
   useEffect(() => {
     if (carouselImages.length === 0) return;
 
-    const scrollContainer = scrollContainerRef.current;
-    if (!scrollContainer) return;
-
-    let scrollPosition = 0;
-    const scrollSpeed = 1; // pixels per interval
-    const scrollInterval = 50; // milliseconds
-
-    const autoScroll = () => {
-      scrollPosition += scrollSpeed;
+    const interval = setInterval(() => {
+      setIsSliding(true);
       
-      // If we've scrolled past the first set of images, reset to beginning
-      if (scrollPosition >= scrollContainer.scrollWidth / 2) {
-        scrollPosition = 0;
-      }
-      
-      scrollContainer.scrollLeft = scrollPosition;
-    };
+      setTimeout(() => {
+        setCurrentImageIndex((prevIndex) => 
+          (prevIndex + 1) % carouselImages.length
+        );
+        setIsSliding(false);
+      }, 500); // Half of the slide duration
+    }, 4000); // Change image every 4 seconds
 
-    const interval = setInterval(autoScroll, scrollInterval);
-
-    // Pause scrolling on hover
-    const handleMouseEnter = () => clearInterval(interval);
-    const handleMouseLeave = () => {
-      clearInterval(interval);
-      setInterval(autoScroll, scrollInterval);
-    };
-
-    scrollContainer.addEventListener('mouseenter', handleMouseEnter);
-    scrollContainer.addEventListener('mouseleave', handleMouseLeave);
-
-    return () => {
-      clearInterval(interval);
-      if (scrollContainer) {
-        scrollContainer.removeEventListener('mouseenter', handleMouseEnter);
-        scrollContainer.removeEventListener('mouseleave', handleMouseLeave);
-      }
-    };
+    return () => clearInterval(interval);
   }, [carouselImages]);
+
+  const handleDotClick = (index) => {
+    if (index !== currentImageIndex) {
+      setIsSliding(true);
+      setTimeout(() => {
+        setCurrentImageIndex(index);
+        setIsSliding(false);
+      }, 500);
+    }
+  };
 
   if (loading) {
     return (
       <Box sx={{ py: 8, textAlign: 'center' }}>
-        <Typography variant="h6">Loading dashboard...</Typography>
+        <Typography variant="h6">Loading...</Typography>
       </Box>
     );
   }
@@ -88,135 +74,101 @@ function Dashboard() {
     );
   }
 
-  // Duplicate images for seamless scrolling
-  const duplicatedImages = [...carouselImages, ...carouselImages];
+  if (carouselImages.length === 0) {
+    return (
+      <Box sx={{ py: 8, textAlign: 'center' }}>
+        <Typography variant="h6" color="text.secondary">
+          No images available
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
-    <Box sx={{ py: 4, backgroundColor: '#f5f5f5', minHeight: '80vh' }}>
+    <Box sx={{ py: 4, backgroundColor: '#FFD700', minHeight: '80vh' }}>
       <Container maxWidth="lg">
-        <Typography 
-          variant="h4" 
-          component="h1" 
-          gutterBottom 
-          sx={{ 
-            textAlign: 'center', 
-            mb: 4, 
-            fontWeight: 'bold',
-            color: '#333'
-          }}
-        >
-          Dashboard
-        </Typography>
-
-        {carouselImages.length > 0 ? (
-          <Paper 
-            elevation={3} 
-            sx={{ 
-              p: 3, 
-              backgroundColor: '#fff',
-              borderRadius: 2,
-              overflow: 'hidden'
-            }}
-          >
-            <Typography 
-              variant="h6" 
-              gutterBottom 
-              sx={{ 
-                textAlign: 'center', 
-                mb: 3,
-                color: '#555'
-              }}
-            >
-              Featured Images
-            </Typography>
-            
-            <Box
-              ref={scrollContainerRef}
-              sx={{
-                display: 'flex',
-                overflow: 'hidden',
-                gap: 2,
-                width: '100%',
-                '&::-webkit-scrollbar': {
-                  display: 'none'
-                },
-                scrollbarWidth: 'none',
-                msOverflowStyle: 'none'
-              }}
-            >
-              {duplicatedImages.map((image, index) => (
-                <Box
-                  key={`${image.id}-${index}`}
-                  sx={{
-                    minWidth: { xs: '280px', sm: '320px', md: '400px' },
-                    height: { xs: '200px', sm: '240px', md: '300px' },
-                    position: 'relative',
-                    borderRadius: 2,
-                    overflow: 'hidden',
-                    boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-                    transition: 'transform 0.3s ease',
-                    '&:hover': {
-                      transform: 'scale(1.02)'
-                    }
+        <style jsx>{`
+          .slide-container {
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            height: 70vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+          }
+          
+          .slide-track {
+            display: flex;
+            width: ${carouselImages.length * 100}%;
+            height: 100%;
+            transform: translateX(-${(currentImageIndex * 100) / carouselImages.length}%);
+            transition: transform 1s ease-in-out;
+          }
+          
+          .slide-item {
+            width: ${100 / carouselImages.length}%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+          }
+          
+          .slide-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            display: block;
+          }
+        `}</style>
+        
+        <Box className="slide-container">
+          <Box className="slide-track">
+            {carouselImages.map((image, index) => (
+              <Box key={image.id} className="slide-item">
+                <img
+                  src={image.image}
+                  alt={`Slide ${index + 1}`}
+                  className="slide-image"
+                  onError={(e) => {
+                    console.error('Image failed to load:', image.image);
+                    e.target.style.display = 'none';
                   }}
-                >
-                  <img
-                    src={image.image}
-                    alt={image.title}
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover'
-                    }}
-                    onError={(e) => {
-                      console.error('Image failed to load:', image.image);
-                      e.target.style.display = 'none';
-                    }}
-                  />
-                  
-                  {/* Image overlay with title */}
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      background: 'linear-gradient(transparent, rgba(0,0,0,0.7))',
-                      color: 'white',
-                      p: 2
-                    }}
-                  >
-                    <Typography 
-                      variant="h6" 
-                      sx={{ 
-                        fontSize: { xs: '1rem', md: '1.25rem' },
-                        fontWeight: 'bold'
-                      }}
-                    >
-                      {image.title}
-                    </Typography>
-                  </Box>
-                </Box>
-              ))}
-            </Box>
-          </Paper>
-        ) : (
-          <Paper 
-            elevation={3} 
+                />
+              </Box>
+            ))}
+          </Box>
+        </Box>
+
+        {/* Image indicators */}
+        {carouselImages.length > 1 && (
+          <Box 
             sx={{ 
-              p: 6, 
-              textAlign: 'center',
-              backgroundColor: '#fff',
-              borderRadius: 2
+              display: 'flex', 
+              justifyContent: 'center', 
+              mt: 3,
+              gap: 1
             }}
           >
-            <Typography variant="h6" color="text.secondary">
-              No carousel images available
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              Images can be uploaded through the admin panel
-            </Typography>
-          </Paper>
+            {carouselImages.map((_, index) => (
+              <Box
+                key={index}
+                onClick={() => handleDotClick(index)}
+                sx={{
+                  width: 12,
+                  height: 12,
+                  borderRadius: '50%',
+                  backgroundColor: index === currentImageIndex ? '#1976d2' : '#ccc',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.3s ease',
+                  '&:hover': {
+                    backgroundColor: index === currentImageIndex ? '#1976d2' : '#999'
+                  }
+                }}
+              />
+            ))}
+          </Box>
         )}
       </Container>
     </Box>
