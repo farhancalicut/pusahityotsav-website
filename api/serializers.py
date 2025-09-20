@@ -53,19 +53,7 @@ class ResultSerializer(serializers.ModelSerializer):
             'group_name'
         ]
 class GalleryImageSerializer(serializers.ModelSerializer):
-    # This new field will contain our full, absolute URL.
-    image_url = serializers.SerializerMethodField()
-
     class Meta:
         model = GalleryImage
-        # We specify the fields we want, including our new one.
-        fields = ['id', 'image_url', 'caption', 'year']
-
-    def get_image_url(self, obj):
-        """
-        This function generates the full, absolute URL for the image
-        by accessing its properties directly from Cloudinary.
-        """
-        if obj.image and hasattr(obj.image, 'url'):
-            return obj.image.url
-        return "" # Return an empty string if there's no image
+        # 'image' will now automatically contain the full Cloudinary URL
+        fields = ['id', 'image', 'caption', 'year']

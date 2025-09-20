@@ -253,14 +253,14 @@ MEDIA_URL = '/media/'
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 # --- DEFINITIVE CLOUDINARY CONFIGURATION (FOR BOTH METHODS) ---
-# This dictionary is specifically for django-cloudinary-storage (Gallery)
+# This dictionary is specifically for django-cloudinary-storage (Gallery Uploads)
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
     'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
     'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
 }
 
-# This explicit config call is for direct uploads (Posters)
+# This explicit config call is for direct uploads (Poster Generation)
 cloudinary.config(
   cloud_name = os.environ.get('CLOUDINARY_CLOUD_NAME'),
   api_key = os.environ.get('CLOUDINARY_API_KEY'),

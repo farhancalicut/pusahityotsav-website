@@ -60,7 +60,7 @@ function GalleryPage() {
               {/* Use image.image directly, which will now be the full Cloudinary URL */}
               <img src={image.image} alt={image.caption} />
               
-              {/* Use a simple link for downloading, which is more reliable */}
+              {/* Use a simple link for downloading, which is the most reliable method */}
               <IconButton
                 component="a"
                 href={image.image}
