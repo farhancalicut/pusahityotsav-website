@@ -11,7 +11,7 @@ from import_export.fields import Field
 from import_export.widgets import ForeignKeyWidget
 
 from .models import (
-    Group, Category, Event, Contestant, Registration, Result, GalleryImage, IndividualChampion
+    Group, Category, Event, Contestant, Registration, Result, GalleryImage, CarouselImage, IndividualChampion
 )
 from .forms import EventResultForm # Import the one correct form
 
@@ -188,6 +188,48 @@ class GalleryImageAdmin(admin.ModelAdmin):
             self.message_user(
                 request, 
                 f"Image '{obj.caption}' saved but Cloudinary upload may have failed. Check logs.", 
+                level='WARNING'
+            )
+
+@admin.register(CarouselImage)
+class CarouselImageAdmin(admin.ModelAdmin):
+    list_display = ('title', 'image_status', 'is_active', 'order', 'uploaded_at')
+    list_filter = ('is_active', 'uploaded_at')
+    list_editable = ('is_active', 'order')
+    readonly_fields = ('cloudinary_url', 'uploaded_at')
+    fields = ('title', 'image', 'cloudinary_url', 'is_active', 'order', 'uploaded_at')
+    ordering = ['order', 'uploaded_at']
+    
+    @admin.display(description='Image Status')
+    def image_status(self, obj):
+        if obj.cloudinary_url:
+            return format_html(
+                '<span style="color: green;">✓ Uploaded to Cloudinary</span><br>'
+                '<a href="{}" target="_blank">View Image</a>', 
+                obj.cloudinary_url
+            )
+        elif obj.image:
+            return format_html('<span style="color: orange;">⚠ Local storage only</span>')
+        else:
+            return format_html('<span style="color: red;">✗ No image</span>')
+    
+    def save_model(self, request, obj, form, change):
+        """
+        Custom save to ensure Cloudinary upload happens
+        """
+        super().save_model(request, obj, form, change)
+        
+        # If save was successful and we have a Cloudinary URL, show success message
+        if obj.cloudinary_url:
+            self.message_user(
+                request, 
+                f"Carousel image '{obj.title}' successfully uploaded to Cloudinary!", 
+                level='SUCCESS'
+            )
+        elif obj.image:
+            self.message_user(
+                request, 
+                f"Carousel image '{obj.title}' saved but Cloudinary upload may have failed. Check logs.", 
                 level='WARNING'
             )
 

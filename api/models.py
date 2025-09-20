@@ -121,6 +121,58 @@ class GalleryImage(models.Model):
     def __str__(self):
         return f"{self.caption} ({self.year})"
     
+class CarouselImage(models.Model):
+    """Model for dashboard carousel images that auto-scroll."""
+    title = models.CharField(max_length=255, help_text="Title or description for the carousel image")
+    image = models.ImageField(upload_to='carousel_images/')
+    cloudinary_url = models.URLField(blank=True, null=True)
+    is_active = models.BooleanField(default=True, help_text="Whether this image should be shown in the carousel")
+    order = models.PositiveIntegerField(default=0, help_text="Order in which images appear (lower numbers first)")
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['order', 'uploaded_at']
+        verbose_name = "Carousel Image"
+        verbose_name_plural = "Carousel Images"
+
+    def save(self, *args, **kwargs):
+        # If image is provided and cloudinary_url is not set, upload to Cloudinary
+        if self.image and not self.cloudinary_url:
+            try:
+                import cloudinary.uploader
+                import uuid
+                
+                # Read the image data
+                self.image.seek(0)
+                image_data = self.image.read()
+                
+                # Create a unique public_id to avoid conflicts
+                unique_id = str(uuid.uuid4())[:8]
+                safe_title = ''.join(c for c in self.title if c.isalnum() or c in '-_')[:20]
+                
+                # Upload to Cloudinary
+                upload_result = cloudinary.uploader.upload(
+                    image_data,
+                    folder="carousel_images",
+                    public_id=f"carousel_{safe_title}_{unique_id}",
+                    overwrite=True
+                )
+                
+                # Store the Cloudinary URL
+                self.cloudinary_url = upload_result.get('secure_url')
+                
+                # Reset the image field position
+                self.image.seek(0)
+                
+            except Exception as e:
+                print(f"Error uploading carousel image to Cloudinary: {e}")
+                # Continue saving even if Cloudinary upload fails
+        
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.title
+
 class IndividualChampion(Contestant):
     """A proxy model to show top individual champions in the admin."""
     class Meta:

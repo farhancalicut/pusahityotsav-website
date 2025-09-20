@@ -5,6 +5,7 @@ from .views import (
     EventViewSet,
     GroupViewSet,
     GalleryImageViewSet,
+    CarouselImageViewSet,
     ContestantViewSet,
     ResultViewSet,
     PointsView,
@@ -21,6 +22,7 @@ router.register(r'categories', CategoryViewSet)
 router.register(r'events', EventViewSet)
 router.register(r'groups', GroupViewSet)
 router.register(r'gallery', GalleryImageViewSet, basename='gallery')
+router.register(r'carousel', CarouselImageViewSet, basename='carousel')
 router.register(r'contestants', ContestantViewSet)
 router.register(r'results', ResultViewSet)
 router.register(r'registrations', RegistrationViewSet)

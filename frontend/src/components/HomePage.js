@@ -16,7 +16,7 @@ function HomePage() {
     <>
       <Box
         sx={{
-          minHeight: "calc(100vh - 65px)",
+          minHeight: "calc(80vh - 65px)",
           backgroundColor: "#1a1a1a",
           color: "white",
           display: "flex",

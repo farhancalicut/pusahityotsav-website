@@ -18,13 +18,14 @@ from .serializers import RegistrationSerializer
 class RegistrationViewSet(viewsets.ModelViewSet):
     queryset = Registration.objects.all()
     serializer_class = RegistrationSerializer
-from .models import Category, Event, Group, Result, GalleryImage, Contestant
+from .models import Category, Event, Group, Result, GalleryImage, CarouselImage, Contestant
 from .serializers import (
     CategorySerializer, 
     EventSerializer, 
     GroupSerializer, 
     ResultSerializer, 
     GalleryImageSerializer,
+    CarouselImageSerializer,
     ContestantSerializer
 )
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
@@ -52,6 +53,19 @@ class GalleryImageViewSet(viewsets.ReadOnlyModelViewSet):
         if year is not None:
             queryset = queryset.filter(year=year)
         return queryset
+
+class CarouselImageViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet for carousel images that auto-scroll on the dashboard.
+    Only returns active images, ordered by their specified order.
+    """
+    serializer_class = CarouselImageSerializer
+
+    def get_queryset(self):
+        """
+        Returns only active carousel images, ordered by their order field.
+        """
+        return CarouselImage.objects.filter(is_active=True).order_by('order', 'uploaded_at')
 
 class ContestantViewSet(viewsets.ModelViewSet):
     queryset = Contestant.objects.all()

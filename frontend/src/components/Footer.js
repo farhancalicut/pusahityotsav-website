@@ -50,7 +50,7 @@ function Footer() {
           </Box>
           
           {/* Row 4: Social Media Icons */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 ,ml: -1,}}>
             <IconButton
               href="https://www.instagram.com/ssfpondicherryuniversity?utm_source=ig_web_button_share_sheet&igsh=MXZ3dHBpZjI3NHZnZQ=="
               target="_blank"

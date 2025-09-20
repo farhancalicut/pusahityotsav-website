@@ -11,7 +11,7 @@ function ResultBanner() {
         backgroundColor: "#fff200",
         color: "black",
         width: "100%", // Use 100% instead of 100vw
-        minHeight: { xs: "80vh", md: "55vh" },
+        minHeight: { xs: "60vh", md: "55vh" },
         display: "flex",
         flexDirection: { xs: "column", md: "row" },
       }}
@@ -25,7 +25,7 @@ function ResultBanner() {
           justifyContent: "center",
           alignItems: "center",
           textAlign: "center",
-          p: 2,
+          pt: 5,
         }}
       >
         <Typography sx={{ fontSize: "1.2rem" }}>Get Your Result of</Typography>
@@ -60,7 +60,7 @@ function ResultBanner() {
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          p: 2,
+          p: 4,
         }}
       >
         <Box

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Group, Category, Event, Contestant, Registration, Result, GalleryImage
+from .models import Group, Category, Event, Contestant, Registration, Result, GalleryImage, CarouselImage
 
 class GroupSerializer(serializers.ModelSerializer):
     class Meta:
@@ -98,6 +98,57 @@ class GalleryImageSerializer(serializers.ModelSerializer):
                 # Log the error but don't crash
                 import logging
                 logging.error(f"Error generating Cloudinary URL for image {obj.id}: {e}")
+            
+            # Return the original URL as final fallback
+            return str(obj.image.url) if obj.image.url else None
+        return None
+
+class CarouselImageSerializer(serializers.ModelSerializer):
+    # Override the image field to return the Cloudinary URL
+    image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CarouselImage
+        fields = ['id', 'title', 'image', 'is_active', 'order']
+
+    def get_image(self, obj):
+        """
+        Return the Cloudinary URL if available, otherwise construct it manually.
+        """
+        # First, try to use the direct Cloudinary URL if it exists (new approach)
+        if obj.cloudinary_url:
+            return obj.cloudinary_url
+        
+        # Fallback: construct Cloudinary URL manually (for old images)
+        if obj.image:
+            try:
+                import os
+                
+                # Get cloud name from environment
+                cloud_name = os.environ.get('CLOUDINARY_CLOUD_NAME')
+                
+                if cloud_name:
+                    # Extract the file path from the image name
+                    image_path = str(obj.image.name)
+                    
+                    # Remove the file extension to get the public_id
+                    if '.' in image_path:
+                        public_id = image_path.rsplit('.', 1)[0]
+                    else:
+                        public_id = image_path
+                    
+                    # Construct the Cloudinary URL
+                    cloudinary_url = f"https://res.cloudinary.com/{cloud_name}/image/upload/{public_id}"
+                    return cloudinary_url
+                else:
+                    # Log this issue but don't crash
+                    import logging
+                    logging.warning(f"No CLOUDINARY_CLOUD_NAME found for carousel image {obj.id}")
+                
+            except Exception as e:
+                # Log the error but don't crash
+                import logging
+                logging.error(f"Error generating Cloudinary URL for carousel image {obj.id}: {e}")
             
             # Return the original URL as final fallback
             return str(obj.image.url) if obj.image.url else None

@@ -10,6 +10,7 @@ import Footer from "./components/Footer";
 
 // --- Page Imports ---
 import HomePage from "./components/HomePage";
+import Dashboard from "./components/Dashboard";
 import AboutPage from "./components/AboutPage";
 import EventsPage from "./components/EventsPage";
 import RegistrationPage from "./components/RegistrationPage";
@@ -41,6 +42,7 @@ function App() {
         >
           <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/events" element={<EventsPage />} />
             <Route path="/register" element={<RegistrationPage />} />

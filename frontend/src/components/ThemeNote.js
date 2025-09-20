@@ -35,14 +35,14 @@ function ThemeNote() {
           }}
         />
 
-        <Box sx={{ flex: 1, textAlign: { xs: "center", md: "left" } }}>
+        <Box sx={{ flex: 1 ,ml:2,mr:2,}}>
           <Typography
             variant="h6"
-            sx={{ fontWeight: "bold", mb: 3, color: "#fffb00ff" }}
+            sx={{ fontWeight: "bold", mb: 3, color: "#fffb00ff", textAlign: { xs: "center", md: "left" } }}
           >
             Theme Note: Chronicling the Coromandel
           </Typography>
-          <Typography variant="body1" sx={{ lineHeight: 1.8, mb: 3 }}>
+          <Typography variant="body1" sx={{ lineHeight: 1.8, mb: 3, textAlign: { xs: "justify", md: "left" } }}>
             This year, Pondicherry University adds a unique dimension to SSF
             Sahithyolsav by embracing the theme “Chronicling the Coromandel,”
             inviting students to explore the region’s layered history of trade,
@@ -50,7 +50,7 @@ function ThemeNote() {
             expression.
           </Typography>
 
-          <Typography variant="body1" sx={{ lineHeight: 1.8, mb: 3 }}>
+          <Typography variant="body1" sx={{ lineHeight: 1.8, mb: 3, textAlign: { xs: "justify", md: "left" } }}>
             From poetry that captures the coastal breeze to essays on forgotten
             ports and visual art reflecting cultural vibrancy, the theme
             encourages a rediscovery of the stories that shaped the southern
@@ -63,7 +63,7 @@ function ThemeNote() {
               display: { xs: isExpanded ? "block" : "none", md: "block" },
             }}
           >
-            <Typography variant="body1" sx={{ lineHeight: 1.8, mb: 4 }}>
+            <Typography variant="body1" sx={{ lineHeight: 1.8, mb: 4, textAlign: { xs: "justify", md: "left" } }}>
               By spotlighting the Coromandel, the festival bridges regional
               identity with national and global conversations, empowering
               students to become thoughtful storytellers rooted in heritage yet
@@ -81,7 +81,7 @@ function ThemeNote() {
               fontWeight: "bold",
               borderRadius: "4px",
               textTransform: "uppercase",
-              mt: 2,
+              mt: 1,
               display: { xs: "inline-flex", md: "none" }, // only mobile
               "&:hover": {
                 backgroundColor: "#e69900",
