@@ -92,10 +92,10 @@ function Dashboard() {
           component="h1" 
           sx={{ 
             textAlign: 'center', 
-            mb: { xs: 1.5, md: 2 }, 
-            mt: { xs: 1, md: 1.5 },
+            mb: { xs: 1, md: 1 }, 
+            mt: { xs: 1.5, md: 1.5 },
             fontWeight: 'bold',
-            fontFamily: 'Poppins-Bold, Arial, sans-serif',
+            fontFamily: 'Poppins-Bold',
             color: '#1e1e1eff',
             fontSize: { xs: '1.5rem', md: '2rem' }
           }}
