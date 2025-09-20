@@ -85,7 +85,7 @@ function Dashboard() {
   }
 
   return (
-    <Box sx={{ py: { xs: 2, md: 4 }, backgroundColor: '#FFD700', minHeight: '80vh' }}>
+    <Box sx={{ py: { xs: 2, md: 4 }, backgroundColor: '#FFD700', minHeight: '60vh' }}>
       <Container maxWidth="lg" sx={{ px: { xs: 1, sm: 2, md: 3 } }}>
         <style jsx>{`
           .slide-container {
