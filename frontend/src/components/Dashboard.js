@@ -87,6 +87,20 @@ function Dashboard() {
   return (
     <Box sx={{ py: { xs: 2, md: 4 }, backgroundColor: '#FFD700', minHeight: '60vh' }}>
       <Container maxWidth="lg" sx={{ px: { xs: 1, sm: 2, md: 3 } }}>
+        <Typography 
+          variant="h4" 
+          component="h1" 
+          sx={{ 
+            textAlign: 'center', 
+            mb: 3, 
+            fontWeight: 'bold',
+            color: '#1e1e1eff',
+            fontSize: { xs: '1.5rem', md: '2rem' }
+          }}
+        >
+          - Updates -
+        </Typography>
+
         <style jsx>{`
           .slide-container {
             position: relative;
@@ -117,13 +131,13 @@ function Dashboard() {
           }
           
           .slide-image {
-            max-width: 100%;
-            max-height: 100%;
+            max-width: 90%;
+            max-height: 90%;
             width: auto;
             height: auto;
             object-fit: contain;
             display: block;
-            border-radius: 8px;
+            border-radius: 15px;
           }
           
           /* Mobile specific styles */
