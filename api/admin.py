@@ -153,8 +153,11 @@ class ResultAdmin(admin.ModelAdmin):
 
 @admin.register(GalleryImage)
 class GalleryImageAdmin(admin.ModelAdmin):
-    list_display = ('caption', 'year', 'uploaded_at')
+    # This temporarily changes the admin to show a text input for the image URL
+    list_display = ('caption', 'year', 'image')
     list_filter = ('year',)
+    # By defining the fields, we force a simple text input for the 'image' field
+    fields = ('caption', 'year', 'image')
 
 @admin.register(IndividualChampion)
 class IndividualChampionAdmin(admin.ModelAdmin):
