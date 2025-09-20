@@ -28,91 +28,57 @@ function Footer() {
       }}
     >
       <Container maxWidth="lg">
-        {/* THIS IS THE KEY CHANGE */}
-        <Grid
-          container
-          spacing={2}
-          alignItems="flex-start"
-          justifyContent="space-between"
-        >
-          <Grid item xs={12} md={6}>
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: "bold" }}>
-              Contact Us
+        <Box sx={{ textAlign: "left" }}>
+          {/* Row 1: Contact Us Title */}
+          <Typography variant="h6" gutterBottom sx={{ fontWeight: "bold" }}>
+            Contact Us
+          </Typography>
+          
+          {/* Row 2: University Name */}
+          <Typography variant="body2" sx={{ color: "#bdbdbd", mb: 1 }}>
+            SSF Pondicherry University, Kalapet
+          </Typography>
+          
+          {/* Row 3: Email Links */}
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="body2" sx={{ color: "#bdbdbd", fontSize: "0.65rem" }}>
+              Email: <Link href="mailto:ssfpondicherryuniversity@gmail.com" sx={{ color: "#bdbdbd", textDecoration: "none" }}>ssfpondicherryuniversity@gmail.com</Link>
             </Typography>
-            <Typography variant="body2" sx={{ color: "#bdbdbd" /* mb: 1*/ }}>
-              SSF Pondicherry University, Kalapet
+            <Typography variant="body2" sx={{ color: "#bdbdbd", fontSize: "0.65rem" }}>
+              DevId: <Link href="mailto:muhammedfarhant6@gmail.com" sx={{ color: "#bdbdbd", textDecoration: "none" }}>muhammedfarhant6@gmail.com</Link>
             </Typography>
-            <Typography
-              variant="body2"
-              sx={{ color: "#bdbdbd", fontSize: "0.65rem" }}
+          </Box>
+          
+          {/* Row 4: Social Media Icons */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+            <IconButton
+              href="https://www.instagram.com/ssfpondicherryuniversity?utm_source=ig_web_button_share_sheet&igsh=MXZ3dHBpZjI3NHZnZQ=="
+              target="_blank"
+              sx={{ color: "white" }}
             >
-              Email: ssfpondicherryuniversity@gmail.com
-              <br />
-              DevId: muhammedfarhant6@gmail.com
-            </Typography>
-          </Grid>
-
-          {/* Column 2: Social Media - New row on mobile, right side on desktop */}
-          <Grid
-            item
-            xs={12}
-            md={6}
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: { xs: "flex-start", md: "flex-end" },
-              justifyContent: { xs: "flex-start", md: "center" },
-            }}
-          >
-            <Box
-  sx={{
-    display: "flex",
-    alignItems: "center",
-    gap: 1,
-    mb: 1,
-    ml: { xs: -1, md: 1 }, // adds left margin on mobile and desktop
-  }}
->
-
-              <IconButton
-                href="https://www.instagram.com/ssfpondicherryuniversity?utm_source=ig_web_button_share_sheet&igsh=MXZ3dHBpZjI3NHZnZQ=="
-                target="_blank"
-                sx={{ color: "white" }}
-              >
-                <InstagramIcon />
-              </IconButton>
-              <IconButton
-                href="https://www.facebook.com/SSFPondicherryUniversity"
-                target="_blank"
-                sx={{ color: "white" }}
-              >
-                <FacebookIcon />
-              </IconButton>
-              {/* <IconButton href="https://www.youtube.com" target="_blank" sx={{ color: 'white' }}>
-                <YouTubeIcon />
-              </IconButton> */}
-              {/* <IconButton href="https://www.twitter.com" target="_blank" sx={{ color: 'white' }}>
-                <XIcon />
-              </IconButton> */}
-              <IconButton
-                href="https://chat.whatsapp.com/CLtEVLigf2fJwZJM0Z5B9v?mode=ems_copy_c"
-                target="_blank"
-                sx={{ color: "white" }}
-              >
-                <WhatsAppIcon />
-              </IconButton>
-            </Box>
-            <Typography
-              variant="body2"
-              sx={{ 
-                color: "#bdbdbd",
-                textAlign: { xs: "left", md: "right" }
-              }}
+              <InstagramIcon />
+            </IconButton>
+            <IconButton
+              href="https://www.facebook.com/SSFPondicherryUniversity"
+              target="_blank"
+              sx={{ color: "white" }}
             >
-              © 2025 SSF PU
-            </Typography>
-          </Grid>
-        </Grid>
+              <FacebookIcon />
+            </IconButton>
+            <IconButton
+              href="https://chat.whatsapp.com/CLtEVLigf2fJwZJM0Z5B9v?mode=ems_copy_c"
+              target="_blank"
+              sx={{ color: "white" }}
+            >
+              <WhatsAppIcon />
+            </IconButton>
+          </Box>
+          
+          {/* Row 5: Copyright */}
+          <Typography variant="body2" sx={{ color: "#bdbdbd" }}>
+            © 2025 SSF PU
+          </Typography>
+        </Box>
       </Container>
     </Box>
   );

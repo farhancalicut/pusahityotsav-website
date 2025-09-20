@@ -65,7 +65,7 @@ function GalleryPage() {
   return (
     <Box sx={{ maxWidth: "1200px", margin: "0 auto", p: 4 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
-        <Typography variant="h5" sx={{ fontWeight: "bold" }}>Photo Gallery</Typography>
+        <Typography variant="h5" sx={{ fontWeight: "bold" }}>Poster Gallery</Typography>
         <FormControl sx={{ minWidth: 120 }} size="small">
           <InputLabel>Year</InputLabel>
           <Select value={selectedYear} label="Year" onChange={handleYearChange}>
