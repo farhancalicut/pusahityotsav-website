@@ -252,8 +252,15 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 MEDIA_URL = '/media/'
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
-# --- DEFINITIVE CLOUDINARY CONFIGURATION ---
-# This explicitly initializes the Cloudinary library with your environment variables.
+# --- DEFINITIVE CLOUDINARY CONFIGURATION (FOR BOTH METHODS) ---
+# This dictionary is specifically for django-cloudinary-storage (Gallery)
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
+}
+
+# This explicit config call is for direct uploads (Posters)
 cloudinary.config(
   cloud_name = os.environ.get('CLOUDINARY_CLOUD_NAME'),
   api_key = os.environ.get('CLOUDINARY_API_KEY'),
