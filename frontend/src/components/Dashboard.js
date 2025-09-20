@@ -85,15 +85,17 @@ function Dashboard() {
   }
 
   return (
-    <Box sx={{ py: { xs: 2, md: 4 }, backgroundColor: '#FFD700', minHeight: '60vh' }}>
-      <Container maxWidth="lg" sx={{ px: { xs: 1, sm: 2, md: 3 } }}>
+    <Box sx={{ py: { xs: 1, md: 2 }, backgroundColor: '#FFD700', minHeight: '80vh' }}>
+      <Container maxWidth="md" sx={{ px: { xs: 2, sm: 3, md: 4 } }}>
         <Typography 
           variant="h4" 
           component="h1" 
           sx={{ 
             textAlign: 'center', 
-            mb: 3, 
+            mb: { xs: 1.5, md: 2 }, 
+            mt: { xs: 1, md: 1.5 },
             fontWeight: 'bold',
+            fontFamily: 'Poppins-Bold, Arial, sans-serif',
             color: '#1e1e1eff',
             fontSize: { xs: '1.5rem', md: '2rem' }
           }}
@@ -102,14 +104,22 @@ function Dashboard() {
         </Typography>
 
         <style jsx>{`
+          @font-face {
+            font-family: 'Poppins-Bold';
+            src: url('./assets/fonts/Poppins-Bold.ttf') format('truetype');
+            font-weight: bold;
+            font-style: normal;
+          }
+          
           .slide-container {
             position: relative;
             overflow: hidden;
             width: 100%;
-            height: 80vh;
+            height: 55vh;
             display: flex;
             justify-content: center;
             align-items: center;
+            margin: 0 auto;
           }
           
           .slide-track {
@@ -127,42 +137,51 @@ function Dashboard() {
             justify-content: center;
             align-items: center;
             flex-shrink: 0;
-            padding: 10px;
+            padding: 15px;
           }
           
           .slide-image {
-            max-width: 90%;
-            max-height: 90%;
+            max-width: 80%;
+            max-height: 80%;
             width: auto;
             height: auto;
             object-fit: contain;
             display: block;
-            border-radius: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
           }
           
           /* Mobile specific styles */
           @media (max-width: 768px) {
             .slide-container {
-              height: 70vh;
+              height: 45vh;
             }
             
             .slide-item {
-              padding: 5px;
+              padding: 12px;
             }
             
             .slide-image {
-              border-radius: 4px;
+              max-width: 85%;
+              max-height: 85%;
+              border-radius: 10px;
             }
           }
           
           /* Small mobile devices */
           @media (max-width: 480px) {
             .slide-container {
-              height: 60vh;
+              height: 40vh;
             }
             
             .slide-item {
-              padding: 3px;
+              padding: 10px;
+            }
+            
+            .slide-image {
+              max-width: 90%;
+              max-height: 90%;
+              border-radius: 8px;
             }
           }
         `}</style>
@@ -191,9 +210,10 @@ function Dashboard() {
             sx={{ 
               display: 'flex', 
               justifyContent: 'center', 
-              mt: { xs: 2, md: 3 },
-              gap: { xs: 0.5, md: 1 },
-              pb: 2
+              mt: { xs: 1.5, md: 2 },
+              mb: { xs: 1, md: 1.5 },
+              gap: { xs: 0.8, md: 1.2 },
+              pb: 1
             }}
           >
             {carouselImages.map((_, index) => (
