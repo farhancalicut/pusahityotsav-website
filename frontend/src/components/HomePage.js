@@ -5,7 +5,6 @@ import { Box, Button, Typography, Container } from "@mui/material";
 import PanToolIcon from "@mui/icons-material/PanTool";
 
 // --- Import the new component ---
-import Dashboard from "./Dashboard";
 import ThemeNote from "./ThemeNote";
 import Scoreboard from "./Scoreboard";
 import ResultBanner from "./ResultBanner";
@@ -109,7 +108,6 @@ function HomePage() {
       </Box>
 
       {/* --- Add the new ThemeNote section here --- */}
-      <Dashboard />
       <ThemeNote />
       <Scoreboard />
       <ResultBanner />

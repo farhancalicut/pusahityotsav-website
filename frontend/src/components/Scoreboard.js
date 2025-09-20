@@ -6,7 +6,7 @@ import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import CountUp from "react-countup";
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
-import API_BASE_URL from '../apiConfig'; 
+import apiConfig from '../apiConfig'; 
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -46,10 +46,11 @@ function Scoreboard() {
 
   const fetchPoints = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/points/`);
-      setPoints(response.data);
+      const response = await axios.get(`${apiConfig.API_BASE_URL}/points/`);
+      setPoints(response.data || []);
     } catch (error) {
       console.error("Error fetching points!", error);
+      setPoints([]); // Ensure points is always an array
     }
   };
 
@@ -66,8 +67,8 @@ function Scoreboard() {
     }
   }, [inView]);
 
-  const topThree = points.slice(0, 3);
-  const restOfTeams = points.slice(3);
+  const topThree = Array.isArray(points) ? points.slice(0, 3) : [];
+  const restOfTeams = Array.isArray(points) ? points.slice(3) : [];
 
   return (
     <Box ref={ref} sx={{ py: 8, backgroundColor: "#ffffff" }}>
