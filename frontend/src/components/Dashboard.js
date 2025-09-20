@@ -83,11 +83,17 @@ function Dashboard() {
               className="slide-track"
               style={{
                 width: `${carouselImages.length * 100}%`,
-                transform: `translateX(-${(currentImageIndex * 100) / carouselImages.length}%)`,
+                transform: `translateX(-${currentImageIndex * 100}%)`,
               }}
             >
-              {carouselImages.map((image) => (
-                <Box key={image.id} className="slide-item">
+              {carouselImages.map((image, index) => (
+                <Box 
+                  key={image.id} 
+                  className="slide-item"
+                  style={{
+                    width: `${100 / carouselImages.length}%`,
+                  }}
+                >
                   <img
                     src={image.image}
                     alt="Carousel slide"
@@ -107,8 +113,8 @@ function Dashboard() {
                   key={index}
                   onClick={() => handleDotClick(index)}
                   sx={{
-                    width: 12,
-                    height: 12,
+                    width: 8,
+                    height: 8,
                     borderRadius: '50%',
                     backgroundColor: index === currentImageIndex ? '#1976d2' : '#ccc',
                     cursor: 'pointer',
