@@ -4,10 +4,19 @@
 */
 @font-face {
   font-family: 'Poppins-Bold';
-  /* This URL works because the 'public' folder becomes the website's root */
-  src: url('/fonts/Poppins-Bold.ttf') format('truetype');
+  src: url('../assets/fonts/Poppins-Bold.ttf') format('truetype');
   font-weight: bold;
   font-style: normal;
+}
+
+/* You can add other global styles below */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .slide-container {
