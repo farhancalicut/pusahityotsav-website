@@ -58,7 +58,15 @@ function GalleryPage() {
           {filteredImages.map((image) => (
             <div key={image.id} className="gallery-item">
               {/* Use image.image directly, which will now be the full Cloudinary URL */}
-              <img src={image.image} alt={image.caption} />
+              <img 
+                src={image.image} 
+                alt={image.caption}
+                onError={(e) => {
+                  console.error(`Failed to load image: ${image.image}`);
+                  e.target.src = '/placeholder-image.png'; // Add a placeholder image if needed
+                }}
+                loading="lazy"
+              />
               
               {/* Use a simple link for downloading, which is the most reliable method */}
               <IconButton

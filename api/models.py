@@ -79,7 +79,44 @@ class GalleryImage(models.Model):
     # --- ADD THIS FIELD ---
     year = models.IntegerField()
     image = models.ImageField(upload_to='gallery_images/')
+    # Store the Cloudinary URL directly
+    cloudinary_url = models.URLField(blank=True, null=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        # If image is provided and cloudinary_url is not set, upload to Cloudinary
+        if self.image and not self.cloudinary_url:
+            try:
+                import cloudinary.uploader
+                import uuid
+                
+                # Read the image data
+                self.image.seek(0)
+                image_data = self.image.read()
+                
+                # Create a unique public_id to avoid conflicts
+                unique_id = str(uuid.uuid4())[:8]
+                safe_caption = ''.join(c for c in self.caption if c.isalnum() or c in '-_')[:20]
+                
+                # Upload to Cloudinary (same method as poster generation)
+                upload_result = cloudinary.uploader.upload(
+                    image_data,
+                    folder="gallery_images",
+                    public_id=f"gallery_{self.year}_{safe_caption}_{unique_id}",
+                    overwrite=True
+                )
+                
+                # Store the Cloudinary URL
+                self.cloudinary_url = upload_result.get('secure_url')
+                
+                # Reset the image field position
+                self.image.seek(0)
+                
+            except Exception as e:
+                print(f"Error uploading to Cloudinary: {e}")
+                # Continue saving even if Cloudinary upload fails
+        
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.caption} ({self.year})"

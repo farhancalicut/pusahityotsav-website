@@ -53,7 +53,7 @@ class ResultSerializer(serializers.ModelSerializer):
             'group_name'
         ]
 class GalleryImageSerializer(serializers.ModelSerializer):
-    # Override the image field to return the full Cloudinary URL
+    # Override the image field to return the Cloudinary URL
     image = serializers.SerializerMethodField()
 
     class Meta:
@@ -62,27 +62,22 @@ class GalleryImageSerializer(serializers.ModelSerializer):
 
     def get_image(self, obj):
         """
-        Return the full Cloudinary URL for the image.
-        This forces the generation of proper Cloudinary URLs in production.
+        Return the Cloudinary URL if available, otherwise construct it manually.
         """
+        # First, try to use the direct Cloudinary URL if it exists (new approach)
+        if obj.cloudinary_url:
+            return obj.cloudinary_url
+        
+        # Fallback: construct Cloudinary URL manually (for old images)
         if obj.image:
-            image_url = obj.image.url
-            
-            # If the URL is already a full Cloudinary URL, return it
-            if 'cloudinary.com' in str(image_url):
-                return image_url
-            
-            # Try to construct Cloudinary URL manually
             try:
                 import os
-                from django.conf import settings
                 
-                # Get cloud name from environment variables (same as poster generation)
+                # Get cloud name from environment (same as poster generation)
                 cloud_name = os.environ.get('CLOUDINARY_CLOUD_NAME')
                 
                 if cloud_name:
                     # Extract the file path from the image name
-                    # obj.image.name contains the path like 'gallery_images/1757813627456.jpeg'
                     image_path = str(obj.image.name)
                     
                     # Remove the file extension to get the public_id
@@ -95,13 +90,15 @@ class GalleryImageSerializer(serializers.ModelSerializer):
                     cloudinary_url = f"https://res.cloudinary.com/{cloud_name}/image/upload/{public_id}"
                     return cloudinary_url
                 else:
-                    # If no cloud name, log this for debugging
-                    print(f"WARNING: No CLOUDINARY_CLOUD_NAME found for image {obj.id}")
+                    # Log this issue but don't crash
+                    import logging
+                    logging.warning(f"No CLOUDINARY_CLOUD_NAME found for image {obj.id}")
                 
             except Exception as e:
-                # Log the error for debugging
-                print(f"Error generating Cloudinary URL for image {obj.id}: {e}")
+                # Log the error but don't crash
+                import logging
+                logging.error(f"Error generating Cloudinary URL for image {obj.id}: {e}")
             
-            # Return the original URL as fallback
-            return str(image_url)
+            # Return the original URL as final fallback
+            return str(obj.image.url) if obj.image.url else None
         return None

@@ -153,11 +153,43 @@ class ResultAdmin(admin.ModelAdmin):
 
 @admin.register(GalleryImage)
 class GalleryImageAdmin(admin.ModelAdmin):
-    # This temporarily changes the admin to show a text input for the image URL
-    list_display = ('caption', 'year', 'image')
-    list_filter = ('year',)
-    # By defining the fields, we force a simple text input for the 'image' field
-    fields = ('caption', 'year', 'image')
+    list_display = ('caption', 'year', 'image_status', 'uploaded_at')
+    list_filter = ('year', 'uploaded_at')
+    readonly_fields = ('cloudinary_url', 'uploaded_at')
+    fields = ('caption', 'year', 'image', 'cloudinary_url', 'uploaded_at')
+    
+    @admin.display(description='Image Status')
+    def image_status(self, obj):
+        if obj.cloudinary_url:
+            return format_html(
+                '<span style="color: green;">✓ Uploaded to Cloudinary</span><br>'
+                '<a href="{}" target="_blank">View Image</a>', 
+                obj.cloudinary_url
+            )
+        elif obj.image:
+            return format_html('<span style="color: orange;">⚠ Local storage only</span>')
+        else:
+            return format_html('<span style="color: red;">✗ No image</span>')
+    
+    def save_model(self, request, obj, form, change):
+        """
+        Custom save to ensure Cloudinary upload happens
+        """
+        super().save_model(request, obj, form, change)
+        
+        # If save was successful and we have a Cloudinary URL, show success message
+        if obj.cloudinary_url:
+            self.message_user(
+                request, 
+                f"Image '{obj.caption}' successfully uploaded to Cloudinary!", 
+                level='SUCCESS'
+            )
+        elif obj.image:
+            self.message_user(
+                request, 
+                f"Image '{obj.caption}' saved but Cloudinary upload may have failed. Check logs.", 
+                level='WARNING'
+            )
 
 @admin.register(IndividualChampion)
 class IndividualChampionAdmin(admin.ModelAdmin):
