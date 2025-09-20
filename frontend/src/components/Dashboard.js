@@ -100,7 +100,8 @@ function Dashboard() {
             fontSize: { xs: '1.5rem', md: '2rem' }
           }}
         >
-          - Updates -
+          
+         - Updates -
         </Typography>
 
         <style jsx>{`
@@ -114,8 +115,8 @@ function Dashboard() {
           .slide-container {
             position: relative;
             overflow: hidden;
-            width: 100%;
-            height: 55vh;
+            width: 90%;
+            height: 90vh;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -141,20 +142,20 @@ function Dashboard() {
           }
           
           .slide-image {
-            max-width: 80%;
-            max-height: 80%;
+            max-width: 90%;        /* Reduce from 100% to make smaller */
+            max-height: 90%;       /* Reduce from 100% to make smaller */
             width: auto;
             height: auto;
             object-fit: contain;
             display: block;
-            border-radius: 12px;
+            border-radius: 20px;   /* Increase for more rounded corners */
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
           }
           
           /* Mobile specific styles */
           @media (max-width: 768px) {
             .slide-container {
-              height: 45vh;
+              height: 80vh;
             }
             
             .slide-item {
@@ -162,16 +163,14 @@ function Dashboard() {
             }
             
             .slide-image {
-              max-width: 85%;
-              max-height: 85%;
-              border-radius: 10px;
+              border-radius: 20px;
             }
           }
           
           /* Small mobile devices */
           @media (max-width: 480px) {
             .slide-container {
-              height: 40vh;
+              height: 80vh;
             }
             
             .slide-item {
@@ -179,9 +178,7 @@ function Dashboard() {
             }
             
             .slide-image {
-              max-width: 90%;
-              max-height: 90%;
-              border-radius: 8px;
+              border-radius: 15px;
             }
           }
         `}</style>
