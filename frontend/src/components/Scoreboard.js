@@ -46,7 +46,7 @@ function Scoreboard() {
 
   const fetchPoints = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/points/`);
+      const response = await axios.get(`${API_BASE_URL}/api/points/`);
       setPoints(response.data || []);
     } catch (error) {
       console.error("Error fetching points!", error);

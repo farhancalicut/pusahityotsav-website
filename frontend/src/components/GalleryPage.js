@@ -39,7 +39,7 @@ function GalleryPage() {
 
   useEffect(() => {
     axios
-      .get(`${API_BASE_URL}/gallery/`)
+      .get(`${API_BASE_URL}/api/gallery/`)
       .then((response) => {
         setImages(response.data);
         

@@ -15,7 +15,7 @@ function Dashboard() {
 
   const fetchCarouselImages = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/carousel/`);
+      const response = await fetch(`${API_BASE_URL}/api/carousel/`);
       if (!response.ok) {
         throw new Error(`Failed to fetch carousel images. Status: ${response.status}`);
       }
