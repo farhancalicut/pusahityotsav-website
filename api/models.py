@@ -142,9 +142,16 @@ class CarouselImage(models.Model):
                 import cloudinary.uploader
                 import uuid
                 
-                # Read the image data
-                self.image.seek(0)
-                image_data = self.image.read()
+                # Read the image data from the uploaded file
+                if hasattr(self.image, 'read'):
+                    # If it's an uploaded file object
+                    self.image.seek(0)
+                    image_data = self.image.read()
+                    self.image.seek(0)  # Reset for Django to save it locally too
+                else:
+                    # If it's already saved locally, read from file path
+                    with open(self.image.path, 'rb') as f:
+                        image_data = f.read()
                 
                 # Create a unique public_id to avoid conflicts
                 unique_id = str(uuid.uuid4())[:8]
@@ -161,12 +168,11 @@ class CarouselImage(models.Model):
                 # Store the Cloudinary URL
                 self.cloudinary_url = upload_result.get('secure_url')
                 
-                # Reset the image field position
-                self.image.seek(0)
+                print(f"✅ Successfully uploaded carousel image to Cloudinary: {self.cloudinary_url}")
                 
             except Exception as e:
-                print(f"Error uploading carousel image to Cloudinary: {e}")
-                # Continue saving even if Cloudinary upload fails
+                print(f"❌ Error uploading carousel image to Cloudinary: {e}")
+                # Don't set cloudinary_url if upload fails - this way we can retry later
         
         super().save(*args, **kwargs)
 

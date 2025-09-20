@@ -17,13 +17,13 @@ function Dashboard() {
     try {
       const response = await fetch(`${apiConfig.API_BASE_URL}/carousel/`);
       if (!response.ok) {
-        throw new Error('Failed to fetch carousel images');
+        throw new Error(`Failed to fetch carousel images. Status: ${response.status}`);
       }
       const data = await response.json();
       setCarouselImages(data);
     } catch (err) {
       console.error('Error fetching carousel images:', err);
-      setError('Failed to load carousel images');
+      setError(`Failed to load carousel images: ${err.message}`);
     } finally {
       setLoading(false);
     }
