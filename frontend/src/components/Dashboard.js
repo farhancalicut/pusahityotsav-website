@@ -43,7 +43,7 @@ function Dashboard() {
         );
         setIsSliding(false);
       }, 500); // Half of the slide duration
-    }, 4000); // Change image every 4 seconds
+    }, 5000); // Change image every 5 seconds
 
     return () => clearInterval(interval);
   }, [carouselImages]);
@@ -85,14 +85,14 @@ function Dashboard() {
   }
 
   return (
-    <Box sx={{ py: 4, backgroundColor: '#FFD700', minHeight: '80vh' }}>
-      <Container maxWidth="lg">
+    <Box sx={{ py: { xs: 2, md: 4 }, backgroundColor: '#FFD700', minHeight: '100vh' }}>
+      <Container maxWidth="lg" sx={{ px: { xs: 1, sm: 2, md: 3 } }}>
         <style jsx>{`
           .slide-container {
             position: relative;
             overflow: hidden;
             width: 100%;
-            height: 70vh;
+            height: 80vh;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -102,24 +102,54 @@ function Dashboard() {
             display: flex;
             width: ${carouselImages.length * 100}%;
             height: 100%;
-            transform: translateX(-${(currentImageIndex * 100) / carouselImages.length}%);
+            transform: translateX(-${currentImageIndex * 100}%);
             transition: transform 1s ease-in-out;
           }
           
           .slide-item {
-            width: ${100 / carouselImages.length}%;
+            width: 100%;
             height: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
             flex-shrink: 0;
+            padding: 10px;
           }
           
           .slide-image {
             max-width: 100%;
             max-height: 100%;
+            width: auto;
+            height: auto;
             object-fit: contain;
             display: block;
+            border-radius: 8px;
+          }
+          
+          /* Mobile specific styles */
+          @media (max-width: 768px) {
+            .slide-container {
+              height: 70vh;
+            }
+            
+            .slide-item {
+              padding: 5px;
+            }
+            
+            .slide-image {
+              border-radius: 4px;
+            }
+          }
+          
+          /* Small mobile devices */
+          @media (max-width: 480px) {
+            .slide-container {
+              height: 60vh;
+            }
+            
+            .slide-item {
+              padding: 3px;
+            }
           }
         `}</style>
         
@@ -147,8 +177,9 @@ function Dashboard() {
             sx={{ 
               display: 'flex', 
               justifyContent: 'center', 
-              mt: 3,
-              gap: 1
+              mt: { xs: 2, md: 3 },
+              gap: { xs: 0.5, md: 1 },
+              pb: 2
             }}
           >
             {carouselImages.map((_, index) => (
@@ -156,15 +187,27 @@ function Dashboard() {
                 key={index}
                 onClick={() => handleDotClick(index)}
                 sx={{
-                  width: 12,
-                  height: 12,
+                  width: { xs: 10, md: 12 },
+                  height: { xs: 10, md: 12 },
                   borderRadius: '50%',
                   backgroundColor: index === currentImageIndex ? '#1976d2' : '#ccc',
                   cursor: 'pointer',
                   transition: 'background-color 0.3s ease',
                   '&:hover': {
                     backgroundColor: index === currentImageIndex ? '#1976d2' : '#999'
-                  }
+                  },
+                  // Larger touch target for mobile
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    width: { xs: 24, md: 20 },
+                    height: { xs: 24, md: 20 },
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    display: { xs: 'block', md: 'none' }
+                  },
+                  position: 'relative'
                 }}
               />
             ))}
