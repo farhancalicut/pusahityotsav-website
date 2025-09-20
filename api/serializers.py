@@ -52,13 +52,58 @@ class ResultSerializer(serializers.ModelSerializer):
             'event_name',
             'group_name'
         ]
-# In api/serializers.py
-
 class GalleryImageSerializer(serializers.ModelSerializer):
-    # This new field will show us the raw value from the database
-    raw_image_path_debug = serializers.CharField(source='image.name', read_only=True)
+    # Override the image field to return the full Cloudinary URL
+    image = serializers.SerializerMethodField()
 
     class Meta:
         model = GalleryImage
-        # 'image' will be the final URL, 'raw_image_path_debug' is for our test
-        fields = ['id', 'image', 'caption', 'year', 'raw_image_path_debug']
+        fields = ['id', 'image', 'caption', 'year']
+
+    def get_image(self, obj):
+        """
+        Return the full Cloudinary URL for the image.
+        This forces the generation of proper Cloudinary URLs in production.
+        """
+        if obj.image:
+            image_url = obj.image.url
+            
+            # If the URL is already a full Cloudinary URL (starts with https://res.cloudinary.com), return it
+            if 'cloudinary.com' in image_url:
+                return image_url
+            
+            # If the URL is relative or local, construct the Cloudinary URL manually
+            # This handles the case where django-cloudinary-storage returns relative URLs in production
+            try:
+                import os
+                from django.conf import settings
+                
+                # Get Cloudinary configuration
+                cloud_name = (
+                    os.environ.get('CLOUDINARY_CLOUD_NAME') or
+                    (hasattr(settings, 'CLOUDINARY_STORAGE') and 
+                     settings.CLOUDINARY_STORAGE.get('CLOUD_NAME'))
+                )
+                
+                if cloud_name:
+                    # Extract the file path from the image name
+                    # obj.image.name contains the path like 'gallery_images/1757813627456.jpeg'
+                    image_path = obj.image.name
+                    
+                    # Remove the file extension to get the public_id
+                    if '.' in image_path:
+                        public_id = image_path.rsplit('.', 1)[0]
+                    else:
+                        public_id = image_path
+                    
+                    # Construct the Cloudinary URL
+                    # Format: https://res.cloudinary.com/{cloud_name}/image/upload/{public_id}
+                    return f"https://res.cloudinary.com/{cloud_name}/image/upload/{public_id}"
+                
+            except Exception as e:
+                # Log the error for debugging
+                print(f"Error generating Cloudinary URL: {e}")
+            
+            # Return the original URL as fallback
+            return image_url
+        return None
