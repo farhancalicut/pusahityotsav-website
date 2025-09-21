@@ -9,6 +9,8 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const [showArrows, setShowArrows] = useState(false);
 
   useEffect(() => {
     const fetchCarouselImages = async () => {
@@ -27,17 +29,50 @@ function Dashboard() {
 
   // Auto-advance to the next image
   useEffect(() => {
-    if (carouselImages.length <= 1) return;
+    if (carouselImages.length <= 1 || isPaused) return;
 
     const interval = setInterval(() => {
       setCurrentImageIndex((prevIndex) => (prevIndex + 1) % carouselImages.length);
-    }, 3000); // Change image every 5 seconds
+    }, 3000); // Change image every 3 seconds
 
     return () => clearInterval(interval);
-  }, [carouselImages]);
+  }, [carouselImages, isPaused]);
 
   const handleDotClick = (index) => {
     setCurrentImageIndex(index);
+  };
+
+  const handlePrevious = () => {
+    setCurrentImageIndex((prevIndex) => 
+      prevIndex === 0 ? carouselImages.length - 1 : prevIndex - 1
+    );
+  };
+
+  const handleNext = () => {
+    setCurrentImageIndex((prevIndex) => (prevIndex + 1) % carouselImages.length);
+  };
+
+  const handleMouseEnter = () => {
+    setIsPaused(true);
+    setShowArrows(true);
+  };
+
+  const handleMouseLeave = () => {
+    setIsPaused(false);
+    setShowArrows(false);
+  };
+
+  const handleTouchStart = () => {
+    setIsPaused(true);
+    setShowArrows(true);
+  };
+
+  const handleTouchEnd = () => {
+    // Add a small delay before hiding arrows on touch devices
+    setTimeout(() => {
+      setIsPaused(false);
+      setShowArrows(false);
+    }, 2000); // Hide arrows after 2 seconds on touch devices
   };
 
   if (loading) {
@@ -78,7 +113,14 @@ function Dashboard() {
       
       {carouselImages.length > 0 ? (
         <>
-          <Box className="slide-container">
+          <Box 
+            className="slide-container"
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+            sx={{ position: 'relative' }}
+          >
             <Box
               className="slide-track"
               style={{
@@ -103,6 +145,74 @@ function Dashboard() {
                 </Box>
               ))}
             </Box>
+
+            {/* Navigation Arrows */}
+            {showArrows && carouselImages.length > 1 && (
+              <>
+                <Box
+                  onClick={handlePrevious}
+                  sx={{
+                    position: 'absolute',
+                    left: 10,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                    color: 'white',
+                    borderRadius: '50%',
+                    width: 40,
+                    height: 40,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    fontSize: '18px',
+                    fontWeight: 'bold',
+                    transition: 'all 0.3s ease',
+                    zIndex: 10,
+                    '&:hover': {
+                      backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                      transform: 'translateY(-50%) scale(1.1)',
+                    },
+                    '&:active': {
+                      transform: 'translateY(-50%) scale(0.95)',
+                    }
+                  }}
+                >
+                  ‹
+                </Box>
+                <Box
+                  onClick={handleNext}
+                  sx={{
+                    position: 'absolute',
+                    right: 10,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                    color: 'white',
+                    borderRadius: '50%',
+                    width: 40,
+                    height: 40,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    fontSize: '18px',
+                    fontWeight: 'bold',
+                    transition: 'all 0.3s ease',
+                    zIndex: 10,
+                    '&:hover': {
+                      backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                      transform: 'translateY(-50%) scale(1.1)',
+                    },
+                    '&:active': {
+                      transform: 'translateY(-50%) scale(0.95)',
+                    }
+                  }}
+                >
+                  ›
+                </Box>
+              </>
+            )}
           </Box>
 
           {/* Simplified Image indicators */}
