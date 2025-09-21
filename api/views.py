@@ -1,4 +1,4 @@
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework import viewsets
@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from django.db.models import Sum
 from django.db.models import Q
 import cloudinary.uploader
+from django.db import connection
 
 from PIL import Image, ImageDraw, ImageFont
 import os
@@ -352,3 +353,30 @@ def debug_gallery_images(request):
         })
     
     return Response(debug_info)
+
+# Ping endpoint to keep database awake
+def ping_database(request):
+    """
+    Simple endpoint to keep the database connection alive.
+    Returns the current time and database status.
+    """
+    try:
+        # Execute a simple query to keep database awake
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+            result = cursor.fetchone()
+        
+        from django.utils import timezone
+        return JsonResponse({
+            'status': 'ok',
+            'timestamp': timezone.now().isoformat(),
+            'database': 'connected',
+            'message': 'Database ping successful'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'timestamp': timezone.now().isoformat(),
+            'database': 'error',
+            'message': str(e)
+        }, status=500)

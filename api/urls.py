@@ -13,7 +13,8 @@ from .views import (
     RegistrationViewSet,
     EventsForRegistrationView,
     debug_cloudinary_vars,
-    debug_gallery_images # <-- ADD THIS NEW IMPORT
+    debug_gallery_images, # <-- ADD THIS NEW IMPORT
+    ping_database
 )
 from . import views
 
@@ -36,4 +37,7 @@ urlpatterns = [
     # Debug endpoints
     path('debug-vars/', debug_cloudinary_vars, name='debug-vars'),
     path('debug-gallery/', debug_gallery_images, name='debug-gallery'),
+    
+    # Keep database awake endpoint
+    path('ping/', ping_database, name='ping-database'),
 ]
