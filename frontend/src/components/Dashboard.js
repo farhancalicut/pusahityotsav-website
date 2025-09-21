@@ -65,14 +65,14 @@ function Dashboard() {
           component="h1"
           sx={{
             textAlign: 'center',
-            mb: 1, // Adjusted margin for better spacing
+            mb: 2, // Adjusted margin for better spacing
             fontWeight: 'bold',
-            fontFamily: 'Poppins-Bold, sans-serif', // Correct font family usage
+            fontFamily: 'Poppins-Regular, sans-serif', // Correct font family usage
             color: '#1e1e1eff',
-            fontSize: { xs: '1.5rem', md: '2rem' }
+            fontSize: { xs: '1.3rem', md: '2rem' }
           }}
         >
-          - Updates -
+          Updates
         </Typography>
       </Container>
       
@@ -116,7 +116,7 @@ function Dashboard() {
                     width: 8,
                     height: 8,
                     borderRadius: '50%',
-                    backgroundColor: index === currentImageIndex ? '#1976d2' : '#ccc',
+                    backgroundColor: index === currentImageIndex ? '#8f8300ff' : '#cdab00ff',
                     cursor: 'pointer',
                     transition: 'background-color 0.3s ease',
                     '&:hover': {
