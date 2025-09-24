@@ -54,8 +54,12 @@ class ContestantResource(resources.ModelResource):
             self._registered_events = ''
         return super().before_import_row(row, **kwargs)
 
-    def after_save_instance(self, instance, using_transactions, dry_run, **kwargs):
+    def after_save_instance(self, instance, *args, **kwargs):
         """Handle registered_events after saving contestant"""
+        # Extract parameters from args/kwargs to handle different django-import-export versions
+        using_transactions = kwargs.get('using_transactions', args[0] if args else True)
+        dry_run = kwargs.get('dry_run', args[1] if len(args) > 1 else False)
+        
         if not dry_run and hasattr(self, '_registered_events') and self._registered_events:
             # Clear existing registrations for this contestant
             Registration.objects.filter(contestant=instance).delete()
@@ -74,7 +78,7 @@ class ContestantResource(resources.ModelResource):
                     # Log or handle missing event
                     print(f"Event '{event_name}' not found for contestant {instance.full_name}")
         
-        super().after_save_instance(instance, using_transactions, dry_run, **kwargs)
+        super().after_save_instance(instance, *args, **kwargs)
 
 # --- Admin Classes ---
 
