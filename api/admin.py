@@ -45,14 +45,59 @@ class ContestantResource(resources.ModelResource):
 
     def before_import_row(self, row, **kwargs):
         """Process registered_events during import"""
+        full_name = row.get('full_name', 'Unknown')
+        print(f"=== IMPORTING: {full_name} ===")
+        
         # Store registered_events for later processing
         if 'registered_events' in row:
             self._registered_events = row.get('registered_events', '').strip()
-            # Debug: Print what we're processing
-            print(f"Processing registered_events for {row.get('full_name', 'Unknown')}: '{self._registered_events}'")
+            print(f"Registered events: '{self._registered_events}'")
         else:
             self._registered_events = ''
+        
+        # Check if Group and Category exist
+        group_name = row.get('group', '').strip()
+        category_name = row.get('category', '').strip()
+        
+        if group_name:
+            if Group.objects.filter(name=group_name).exists():
+                print(f"✓ Group found: '{group_name}'")
+            else:
+                print(f"✗ Group NOT found: '{group_name}'")
+                print(f"Available groups: {list(Group.objects.values_list('name', flat=True))}")
+        
+        if category_name:
+            if Category.objects.filter(name=category_name).exists():
+                print(f"✓ Category found: '{category_name}'")
+            else:
+                print(f"✗ Category NOT found: '{category_name}'")
+                print(f"Available categories: {list(Category.objects.values_list('name', flat=True))}")
+        
         return super().before_import_row(row, **kwargs)
+    
+    def before_save_instance(self, instance, using_transactions, dry_run, **kwargs):
+        """Debug before saving the contestant"""
+        print(f"=== BEFORE SAVE INSTANCE ===")
+        print(f"Instance: {instance}")
+        print(f"Full name: {instance.full_name}")
+        print(f"Email: {instance.email}")
+        print(f"Group: {instance.group}")
+        print(f"Category: {instance.category}")
+        print(f"Dry run: {dry_run}")
+        print(f"=== END BEFORE SAVE ===")
+        return super().before_save_instance(instance, using_transactions, dry_run, **kwargs)
+
+    def import_row(self, row, instance_loader, **kwargs):
+        """Override import_row to catch and debug any errors"""
+        try:
+            print(f"=== STARTING IMPORT ROW FOR {row.get('full_name', 'Unknown')} ===")
+            result = super().import_row(row, instance_loader, **kwargs)
+            print(f"=== ROW IMPORT RESULT: {result} ===")
+            return result
+        except Exception as e:
+            print(f"=== ERROR IMPORTING ROW: {e} ===")
+            print(f"Row data was: {dict(row)}")
+            raise  # Re-raise the exception so import process can handle it
 
     def after_save_instance(self, instance, *args, **kwargs):
         """Handle registered_events after saving contestant"""
