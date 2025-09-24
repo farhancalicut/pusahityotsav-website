@@ -66,17 +66,36 @@ class ContestantResource(resources.ModelResource):
             
             # Process the registered_events string
             event_names = [name.strip() for name in self._registered_events.split(',') if name.strip()]
+            print(f"Processing {len(event_names)} events for {instance.full_name}: {event_names}")
+            
+            successfully_registered = []
+            failed_events = []
             
             for event_name in event_names:
                 try:
+                    # Try exact match first
                     event = Event.objects.get(name=event_name)
-                    Registration.objects.get_or_create(
+                    registration, created = Registration.objects.get_or_create(
                         contestant=instance,
                         event=event
                     )
+                    successfully_registered.append(event_name)
+                    print(f"✓ Registered {instance.full_name} for '{event_name}'")
                 except Event.DoesNotExist:
-                    # Log or handle missing event
-                    print(f"Event '{event_name}' not found for contestant {instance.full_name}")
+                    # Try case-insensitive match
+                    try:
+                        event = Event.objects.get(name__iexact=event_name)
+                        registration, created = Registration.objects.get_or_create(
+                            contestant=instance,
+                            event=event
+                        )
+                        successfully_registered.append(event_name)
+                        print(f"✓ Registered {instance.full_name} for '{event_name}' (case-insensitive match)")
+                    except Event.DoesNotExist:
+                        failed_events.append(event_name)
+                        print(f"✗ Event '{event_name}' not found for contestant {instance.full_name}")
+            
+            print(f"Summary for {instance.full_name}: {len(successfully_registered)} registered, {len(failed_events)} failed")
         
         super().after_save_instance(instance, *args, **kwargs)
 
