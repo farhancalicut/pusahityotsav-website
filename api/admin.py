@@ -39,7 +39,45 @@ class ContestantResource(resources.ModelResource):
         event_names = [reg.event.name for reg in registrations]
         return ", ".join(event_names)
 
+    def before_import_row(self, row, **kwargs):
+        """Process registered_events during import"""
+        # Store registered_events for later processing
+        if 'registered_events' in row:
+            self._registered_events = row.get('registered_events', '')
+        return super().before_import_row(row, **kwargs)
+
+    def after_save_instance(self, instance, using_transactions, dry_run):
+        """Handle registered_events after saving contestant"""
+        if not dry_run and hasattr(self, '_registered_events') and self._registered_events:
+            # Clear existing registrations for this contestant
+            Registration.objects.filter(contestant=instance).delete()
+            
+            # Process the registered_events string
+            event_names = [name.strip() for name in self._registered_events.split(',') if name.strip()]
+            
+            for event_name in event_names:
+                try:
+                    event = Event.objects.get(name=event_name)
+                    Registration.objects.get_or_create(
+                        contestant=instance,
+                        event=event
+                    )
+                except Event.DoesNotExist:
+                    # Log or handle missing event
+                    print(f"Event '{event_name}' not found for contestant {instance.full_name}")
+        
+        super().after_save_instance(instance, using_transactions, dry_run)
+
 # --- Admin Classes ---
+
+# Inline for managing registrations within Contestant admin
+class RegistrationInline(admin.TabularInline):
+    model = Registration
+    extra = 1  # Show 1 empty form by default
+    autocomplete_fields = ['event']
+    verbose_name = "Event Registration"
+    verbose_name_plural = "Event Registrations"
+
 @admin.register(Group)
 class GroupAdmin(admin.ModelAdmin):
     search_fields = ('name',)
@@ -125,10 +163,19 @@ class EventAdmin(admin.ModelAdmin):
 @admin.register(Contestant)
 class ContestantAdmin(ImportExportModelAdmin): # <-- This is the key change
     resource_class = ContestantResource
-    list_display = ('full_name', 'email', 'group', 'category', 'gender')
+    list_display = ('full_name', 'email', 'group', 'category', 'gender', 'registered_events_display')
     list_filter = ('gender', 'group', 'category')
     search_fields = ('full_name', 'email')
     autocomplete_fields = ['group', 'category']
+    inlines = [RegistrationInline]
+    
+    @admin.display(description='Registered Events')
+    def registered_events_display(self, obj):
+        registrations = Registration.objects.filter(contestant=obj)
+        event_names = [reg.event.name for reg in registrations]
+        if event_names:
+            return format_html('<br>'.join(event_names))
+        return "No events registered"
 
 @admin.register(Registration)
 class RegistrationAdmin(admin.ModelAdmin):
@@ -235,15 +282,32 @@ class CarouselImageAdmin(admin.ModelAdmin):
 
 @admin.register(IndividualChampion)
 class IndividualChampionAdmin(admin.ModelAdmin):
-    list_display = ['full_name', 'group', 'total_points']
+    list_display = ['full_name', 'group', 'total_points', 'events_participated']
 
     def get_queryset(self, request):
+        from django.db.models import Q
         queryset = super().get_queryset(request)
-        return queryset.annotate(total_points=Sum('registration__result__points')).order_by('-total_points')
+        # Only include contestants who have results with points > 0
+        queryset = queryset.filter(
+            registration__result__isnull=False,
+            registration__result__points__gt=0
+        ).annotate(
+            total_points=Sum('registration__result__points')
+        ).distinct().order_by('-total_points')
+        return queryset
     
     @admin.display(description='Total Points', ordering='total_points')
     def total_points(self, obj):
-        return obj.total_points
+        return obj.total_points if obj.total_points else 0
+    
+    @admin.display(description='Events Participated')
+    def events_participated(self, obj):
+        # Count events where the contestant has results
+        events_count = Result.objects.filter(
+            registration__contestant=obj,
+            points__gt=0
+        ).count()
+        return events_count
     
     def has_add_permission(self, request): return False
     def has_change_permission(self, request, obj=None): return False

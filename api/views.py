@@ -97,186 +97,129 @@ class PointsView(APIView):
 
         return Response(sorted_points_data)
 
-# class GenerateEventPostersView(APIView):
-#     def get(self, request, event_id):
-#         try:
-#             # Step 1: Find the specific event
-#             event = Event.objects.get(id=event_id)
-            
-#             # Step 2: Find all results for that event with a winning position
-#             # This is the crucial query. It links Result -> Registration -> Event
-#             results = Result.objects.filter(
-#                 registration__event=event, 
-#                 position__in=[1, 2, 3]
-#             ).order_by('position').select_related('registration__contestant', 'registration__contestant__group')
-
-#             if not results.exists():
-#                 # This is the explicit "no results found" response
-#                 return Response([], status=200)
-
-#             # --- Poster Generation Logic (Your code is correct) ---
-#             template_files = ['template_black.png', 'template_pink.png', 'template_purple.png']
-#             generated_posters_urls = []
-
-#             for template_name in template_files:
-#                 try:
-#                     template_path = os.path.join(settings.BASE_DIR, 'assets', template_name)
-#                     image = Image.open(template_path)
-#                     draw = ImageDraw.Draw(image)
-#                     img_width, img_height = image.size
-#                     font_main_path = os.path.join(settings.BASE_DIR, 'assets', 'fonts', 'Poppins-Bold.ttf')
-#                     font_secondary_path = os.path.join(settings.BASE_DIR, 'assets', 'fonts', 'Poppins-Regular.ttf')
-
-#                     # Create separate font objects for each text element
-#                     font_result_label = ImageFont.truetype(font_main_path, 65)
-#                     font_publication_num = ImageFont.truetype(font_main_path, 300)
-#                     font_category = ImageFont.truetype(font_secondary_path, 80)
-#                     font_event = ImageFont.truetype(font_main_path, 105)
-#                     font_winner = ImageFont.truetype(font_main_path, 78)
-#                     font_department = ImageFont.truetype(font_secondary_path, 62)
-
-#                     # --- 2. COLOR CUSTOMIZATION ---
-#                     # Define different colors for your text
-#                     color_primary = (255, 255, 255) #if "black" in template_name else (0, 0, 0)
-#                     color_secondary = (255, 255, 255) #if "black" in template_name else (100, 100, 100)
-#                     even_name_color = (252, 224, 9) #if "black" in template_name else (255, 255, 255)
-#                     # --- 3. TEXT AND POSITION (ALIGNMENT) CUSTOMIZATION ---
-#                     # Adjust the (X, Y) coordinates for each draw.text() call
-
-#                     # Result Label
-#                     draw.text((1500, 1450), "Result", font=font_result_label, fill=color_secondary)
-
-#                     # Publication Number
-#                     draw.text((1550, 1500), str(result_number_to_display), font=font_publication_num, fill=color_primary)
-#                     # Category Name (now shown first)
-#                     draw.text((1750, 1600), event_details.category.name.upper(), font=font_category, fill=color_secondary)
-
-#                     # Event Name (now shown second)
-#                     draw.text((1750, 1700), event_details.name.upper(), font=font_event, fill=even_name_color)
-                    
-#                     # Winners List
-#                     start_y = 2290
-#                     for result in results:
-#                         winner_name = result.registration.contestant.full_name
-#                         department_name = result.registration.contestant.group.name 
-                        
-#                         # Winner Name
-#                         draw.text((2100, start_y ), winner_name, font=font_winner, fill=color_primary)
-#                         # Department Name
-#                         draw.text((2100, start_y  + 95), department_name, font=font_department, fill=color_secondary)
-                        
-#                         start_y += 450
-
-
-#                 buffer = io.BytesIO()
-#                 image.save(buffer, format='PNG')
-#                 buffer.seek(0)
-
-#                 upload_result = cloudinary.uploader.upload(
-#                     buffer,
-#                     folder="generated_posters",
-#                     public_id=f'event_{event_id}_{template_name.split(".")[0]}'
-#                 )
-                
-#                 image_url = upload_result.get('secure_url')
-#                 if image_url:
-#                     generated_posters_urls.append({'id': template_name, 'url': image_url})
-
-#             return Response(generated_posters_urls)
-
-#         except Event.DoesNotExist:
-#             return Response({"error": "Event not found."}, status=404)
-#         except Exception as e:
-#             # This will print the specific error to your Render logs for debugging
-#             print(f"CRITICAL ERROR in GenerateEventPostersView: {e}")
-#             return Response({'error': 'An unexpected server error occurred.'}, status=500)
 
 class GenerateEventPostersView(APIView):
+    # Class-level cache for fonts and templates to avoid repeated loading
+    _font_cache = {}
+    _template_cache = {}
+    
+    def get_fonts(self):
+        """Cache fonts to avoid loading them repeatedly"""
+        if not self._font_cache:
+            font_main_path = os.path.join(settings.BASE_DIR, 'assets', 'fonts', 'Poppins-Bold.ttf')
+            font_secondary_path = os.path.join(settings.BASE_DIR, 'assets', 'fonts', 'Poppins-Regular.ttf')
+            
+            self._font_cache = {
+                'result_label': ImageFont.truetype(font_main_path, 65),
+                'publication_num': ImageFont.truetype(font_main_path, 300),
+                'category': ImageFont.truetype(font_secondary_path, 80),
+                'event': ImageFont.truetype(font_main_path, 105),
+                'winner': ImageFont.truetype(font_main_path, 78),
+                'department': ImageFont.truetype(font_secondary_path, 62),
+            }
+        return self._font_cache
+    
+    def get_template(self, template_name):
+        """Cache template images to avoid repeated loading"""
+        if template_name not in self._template_cache:
+            template_path = os.path.join(settings.BASE_DIR, 'assets', template_name)
+            self._template_cache[template_name] = Image.open(template_path)
+        # Return a copy to avoid modifying the cached template
+        return self._template_cache[template_name].copy()
+    
+    def draw_poster_content(self, image, event, results, result_number, is_general_event, category_names):
+        """Optimized drawing function with cached fonts"""
+        draw = ImageDraw.Draw(image)
+        fonts = self.get_fonts()
+        
+        # Define colors (constants)
+        color_primary = (255, 255, 255)
+        color_secondary = (255, 255, 255)
+        even_name_color = (252, 224, 9)
+        
+        # Pre-calculate text content to minimize string operations during drawing
+        result_text = "Result"
+        publication_text = str(result_number)
+        event_name_text = event.name.upper()
+        
+        # Draw result label
+        draw.text((1500, 1450), result_text, font=fonts['result_label'], fill=color_secondary)
+        
+        # Draw publication number
+        draw.text((1550, 1500), publication_text, font=fonts['publication_num'], fill=color_primary)
+        
+        # Draw category and event name
+        event_y_position = 1700
+        if not is_general_event and category_names:
+            category_text = category_names[0].upper()
+            draw.text((1750, 1600), category_text, font=fonts['category'], fill=color_secondary)
+        else:
+            event_y_position = 1650
+        
+        draw.text((1750, event_y_position), event_name_text, font=fonts['event'], fill=even_name_color)
+        
+        # Draw winners list (optimized loop)
+        start_y = 2290
+        for result in results:
+            winner_name = result.registration.contestant.full_name
+            department_name = result.registration.contestant.group.name
+            
+            draw.text((2100, start_y), winner_name, font=fonts['winner'], fill=color_primary)
+            draw.text((2100, start_y + 95), department_name, font=fonts['department'], fill=color_secondary)
+            start_y += 450
+    
     def get(self, request, event_id):
         try:
-            event = Event.objects.get(id=event_id)
+            # Optimized query with select_related to reduce database hits
+            event = Event.objects.select_related().prefetch_related('categories').get(id=event_id)
             results = Result.objects.filter(
                 registration__event=event,
                 position__in=[1, 2, 3]
             ).order_by('position').select_related(
-                'registration__contestant',
-                'registration__contestant__group'
+                'registration__contestant__group',
+                'registration__event'
             )
 
             if not results.exists():
                 return Response([], status=200)
 
-            # --- 1. GET THE NEW DATA ---
-            # Get the result number from the first winner
+            # Pre-calculate common data once
             result_number = results.first().resultNumber or ""
-
-            # Determine the category name to display based on your "General Event" logic
             category_names = [cat.name for cat in event.categories.all()]
             is_general_event = len(category_names) > 1
+            
+            # Ensure output directory exists once
+            output_dir = os.path.join(settings.MEDIA_ROOT, 'generated_posters')
+            os.makedirs(output_dir, exist_ok=True)
             
             generated_posters_urls = []
             template_files = ['template_black.png', 'template_pink.png', 'template_purple.png']
 
+            # Process templates in parallel-friendly way
             for template_name in template_files:
-                template_path = os.path.join(settings.BASE_DIR, 'assets', template_name)
-                image = Image.open(template_path)
-                draw = ImageDraw.Draw(image)
-
-                # --- 2. SETUP FONTS & COLORS (As per your original design) ---
-                font_main_path = os.path.join(settings.BASE_DIR, 'assets', 'fonts', 'Poppins-Bold.ttf')
-                font_secondary_path = os.path.join(settings.BASE_DIR, 'assets', 'fonts', 'Poppins-Regular.ttf')
-
-                font_result_label = ImageFont.truetype(font_main_path, 65)
-                font_publication_num = ImageFont.truetype(font_main_path, 300)
-                font_category = ImageFont.truetype(font_secondary_path, 80)
-                font_event = ImageFont.truetype(font_main_path, 105)
-                font_winner = ImageFont.truetype(font_main_path, 78)
-                font_department = ImageFont.truetype(font_secondary_path, 62)
-
-                color_primary = (255, 255, 255)
-                color_secondary = (255, 255, 255)
-                even_name_color = (252, 224, 9)
-
-                # --- 3. DRAW ALL TEXT ON THE POSTER ---
-                # Result Label
-                draw.text((1500, 1450), "Result", font=font_result_label, fill=color_secondary)
-
-                # Publication Number (RESTORED)
-                draw.text((1550, 1500), str(result_number), font=font_publication_num, fill=color_primary)
-
-                # Event Name
-                event_y_position = 1700
-                if not is_general_event:
-                    # If it's NOT a general event, draw the category name (RESTORED)
-                    category_display_name = category_names[0].upper() if category_names else ""
-                    draw.text((1750, 1600), category_display_name, font=font_category, fill=color_secondary)
-                else:
-                    # If it IS a general event, move the event name up slightly to fill the space
-                    event_y_position = 1650
-
-                draw.text((1750, event_y_position), event.name.upper(), font=font_event, fill=even_name_color)
-
-                # Winners List
-                start_y = 2290
-                for result in results:
-                    winner_name = result.registration.contestant.full_name
-                    department_name = result.registration.contestant.group.name
-                    draw.text((2100, start_y), winner_name, font=font_winner, fill=color_primary)
-                    draw.text((2100, start_y + 95), department_name, font=font_department, fill=color_secondary)
-                    start_y += 450
-
-                # --- 4. SAVE AND RESPOND ---
-                # This part correctly saves the poster to your local media folder
-                output_dir = os.path.join(settings.MEDIA_ROOT, 'generated_posters')
-                os.makedirs(output_dir, exist_ok=True)
-                output_filename = f'event_{event_id}_{template_name}'
-                output_path = os.path.join(output_dir, output_filename)
-                image.save(output_path, "PNG")
-
-                image_url = request.build_absolute_uri(
-                    os.path.join(settings.MEDIA_URL, 'generated_posters', output_filename)
-                )
-                generated_posters_urls.append({'id': template_name, 'url': image_url})
+                try:
+                    # Use cached template
+                    image = self.get_template(template_name)
+                    
+                    # Draw all content using optimized function
+                    self.draw_poster_content(image, event, results, result_number, is_general_event, category_names)
+                    
+                    # Optimized file saving
+                    output_filename = f'event_{event_id}_{template_name}'
+                    output_path = os.path.join(output_dir, output_filename)
+                    
+                    # Save with optimized PNG settings
+                    image.save(output_path, "PNG", optimize=True)
+                    
+                    # Build URL once
+                    image_url = request.build_absolute_uri(
+                        os.path.join(settings.MEDIA_URL, 'generated_posters', output_filename)
+                    )
+                    generated_posters_urls.append({'id': template_name, 'url': image_url})
+                    
+                except Exception as template_error:
+                    print(f"Error processing template {template_name}: {template_error}")
+                    continue
 
             return Response(generated_posters_urls)
 
