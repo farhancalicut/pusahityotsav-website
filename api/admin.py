@@ -27,7 +27,11 @@ class ContestantResource(resources.ModelResource):
         attribute='category',
         widget=ForeignKeyWidget(Category, 'name'))
         
-    registered_events = Field(column_name='registered_events')
+    registered_events = Field(
+        column_name='registered_events',
+        attribute='registered_events',
+        readonly=True  # This field is not directly mapped to a model field
+    )
 
     class Meta:
         model = Contestant
@@ -43,10 +47,14 @@ class ContestantResource(resources.ModelResource):
         """Process registered_events during import"""
         # Store registered_events for later processing
         if 'registered_events' in row:
-            self._registered_events = row.get('registered_events', '')
+            self._registered_events = row.get('registered_events', '').strip()
+            # Debug: Print what we're processing
+            print(f"Processing registered_events for {row.get('full_name', 'Unknown')}: '{self._registered_events}'")
+        else:
+            self._registered_events = ''
         return super().before_import_row(row, **kwargs)
 
-    def after_save_instance(self, instance, using_transactions, dry_run):
+    def after_save_instance(self, instance, using_transactions, dry_run, **kwargs):
         """Handle registered_events after saving contestant"""
         if not dry_run and hasattr(self, '_registered_events') and self._registered_events:
             # Clear existing registrations for this contestant
@@ -66,7 +74,7 @@ class ContestantResource(resources.ModelResource):
                     # Log or handle missing event
                     print(f"Event '{event_name}' not found for contestant {instance.full_name}")
         
-        super().after_save_instance(instance, using_transactions, dry_run)
+        super().after_save_instance(instance, using_transactions, dry_run, **kwargs)
 
 # --- Admin Classes ---
 
