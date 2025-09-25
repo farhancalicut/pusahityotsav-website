@@ -126,27 +126,35 @@ class GenerateEventPostersView(APIView):
             generated_posters_urls = []
             template_files = ['template_black.png', 'template_pink.png', 'template_purple.png']
 
-            # Load fonts once (but don't cache them globally)
-            font_main_path = os.path.join(settings.BASE_DIR, 'assets', 'fonts', 'Poppins-Bold.ttf')
-            font_secondary_path = os.path.join(settings.BASE_DIR, 'assets', 'fonts', 'Poppins-Regular.ttf')
-            
-            fonts = {
-                'result_label': ImageFont.truetype(font_main_path, 65),
-                'publication_num': ImageFont.truetype(font_main_path, 300),
-                'category': ImageFont.truetype(font_secondary_path, 80),
-                'event': ImageFont.truetype(font_main_path, 105),
-                'winner': ImageFont.truetype(font_main_path, 78),
-                'department': ImageFont.truetype(font_secondary_path, 62),
-            }
-
-            # Process templates
+            # Process one template at a time to minimize memory usage
             for template_name in template_files:
                 try:
-                    # Load template fresh each time to avoid PIL issues
+                    print(f"Processing template: {template_name}")
+                    
+                    # Load template and process immediately
                     template_path = os.path.join(settings.BASE_DIR, 'assets', template_name)
-                    with Image.open(template_path) as template_image:
-                        # Create a new image from the template
-                        image = template_image.copy()
+                    
+                    # Open, process, and save in one go to minimize memory usage
+                    with Image.open(template_path) as template_img:
+                        # Copy the template to work with
+                        image = template_img.copy()
+                    
+                    # Load fonts (do this once per template to save memory)
+                    try:
+                        font_main_path = os.path.join(settings.BASE_DIR, 'assets', 'fonts', 'Poppins-Bold.ttf')
+                        font_secondary_path = os.path.join(settings.BASE_DIR, 'assets', 'fonts', 'Poppins-Regular.ttf')
+                        
+                        font_result_label = ImageFont.truetype(font_main_path, 65)
+                        font_publication_num = ImageFont.truetype(font_main_path, 300)
+                        font_category = ImageFont.truetype(font_secondary_path, 80)
+                        font_event = ImageFont.truetype(font_main_path, 105)
+                        font_winner = ImageFont.truetype(font_main_path, 78)
+                        font_department = ImageFont.truetype(font_secondary_path, 62)
+                        
+                    except Exception as font_error:
+                        print(f"Font loading error: {font_error}")
+                        # Use default font if custom fonts fail
+                        font_result_label = font_publication_num = font_category = font_event = font_winner = font_department = ImageFont.load_default()
                     
                     draw = ImageDraw.Draw(image)
                     
@@ -155,21 +163,19 @@ class GenerateEventPostersView(APIView):
                     color_secondary = (255, 255, 255)
                     even_name_color = (252, 224, 9)
                     
-                    # Draw result label
-                    draw.text((1500, 1450), "Result", font=fonts['result_label'], fill=color_secondary)
-                    
-                    # Draw publication number
-                    draw.text((1550, 1500), str(result_number), font=fonts['publication_num'], fill=color_primary)
+                    # Draw content
+                    draw.text((1500, 1450), "Result", font=font_result_label, fill=color_secondary)
+                    draw.text((1550, 1500), str(result_number), font=font_publication_num, fill=color_primary)
                     
                     # Draw category and event name
                     event_y_position = 1700
                     if not is_general_event and category_names:
                         category_text = category_names[0].upper()
-                        draw.text((1750, 1600), category_text, font=fonts['category'], fill=color_secondary)
+                        draw.text((1750, 1600), category_text, font=font_category, fill=color_secondary)
                     else:
                         event_y_position = 1650
                     
-                    draw.text((1750, event_y_position), event.name.upper(), font=fonts['event'], fill=even_name_color)
+                    draw.text((1750, event_y_position), event.name.upper(), font=font_event, fill=even_name_color)
                     
                     # Draw winners list
                     start_y = 2290
@@ -177,16 +183,17 @@ class GenerateEventPostersView(APIView):
                         winner_name = result.registration.contestant.full_name
                         department_name = result.registration.contestant.group.name
                         
-                        draw.text((2100, start_y), winner_name, font=fonts['winner'], fill=color_primary)
-                        draw.text((2100, start_y + 95), department_name, font=fonts['department'], fill=color_secondary)
+                        draw.text((2100, start_y), winner_name, font=font_winner, fill=color_primary)
+                        draw.text((2100, start_y + 95), department_name, font=font_department, fill=color_secondary)
                         start_y += 450
                     
-                    # Save with optimized settings
+                    # Save with memory-efficient approach
                     output_filename = f'event_{event_id}_{template_name}'
                     output_path = os.path.join(output_dir, output_filename)
                     
-                    # Save as PNG with optimization
-                    image.save(output_path, "PNG", optimize=True)
+                    # Save without optimization to avoid PIL issues on Render
+                    image.save(output_path, "PNG")
+                    print(f"Saved: {output_filename}")
                     
                     # Build URL
                     image_url = request.build_absolute_uri(
@@ -194,19 +201,26 @@ class GenerateEventPostersView(APIView):
                     )
                     generated_posters_urls.append({'id': template_name, 'url': image_url})
                     
-                    # Explicitly close the image to free memory
+                    # Immediately close and delete the image to free memory
                     image.close()
+                    del image
+                    del draw
+                    
+                    print(f"Completed template: {template_name}")
                     
                 except Exception as template_error:
                     print(f"Error processing template {template_name}: {template_error}")
                     continue
 
+            print(f"Generated {len(generated_posters_urls)} posters for event {event_id}")
             return Response(generated_posters_urls)
 
         except Event.DoesNotExist:
             return Response({"error": "Event not found."}, status=404)
         except Exception as e:
             print(f"CRITICAL ERROR in GenerateEventPostersView: {e}")
+            import traceback
+            traceback.print_exc()
             return Response({'error': 'An unexpected server error occurred.'}, status=500)
 
 class EventsForRegistrationView(APIView):
