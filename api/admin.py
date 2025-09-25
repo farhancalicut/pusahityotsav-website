@@ -88,8 +88,36 @@ class ContestantResource(resources.ModelResource):
         print(f"Group: {instance.group}")
         print(f"Category: {instance.category}")
         print(f"Dry run: {dry_run}")
+        
+        # Check for potential issues
+        if not instance.full_name:
+            print(f"⚠️ WARNING: Empty full_name!")
+        if not instance.email:
+            print(f"⚠️ WARNING: Empty email!")
+        if not instance.group:
+            print(f"⚠️ WARNING: Empty group!")
+        if not instance.category:
+            print(f"⚠️ WARNING: Empty category!")
+            
+        # Check if email already exists (unique constraint)
+        if instance.email:
+            existing_contestant = Contestant.objects.filter(email=instance.email).first()
+            if existing_contestant and existing_contestant.id != instance.id:
+                print(f"⚠️ WARNING: Email '{instance.email}' already exists for contestant: {existing_contestant.full_name}")
+        
         print(f"=== END BEFORE SAVE ===")
         return super().before_save_instance(instance, *args, **kwargs)
+    
+    def save_instance(self, instance, *args, **kwargs):
+        """Override save to add transaction debugging"""
+        try:
+            print(f"=== SAVING INSTANCE: {instance.full_name} ===")
+            result = super().save_instance(instance, *args, **kwargs)
+            print(f"✓ Successfully saved: {instance.full_name} (ID: {instance.id})")
+            return result
+        except Exception as e:
+            print(f"✗ Error saving {instance.full_name}: {e}")
+            raise
 
     def import_row(self, row, instance_loader, **kwargs):
         """Override import_row to catch and debug any errors"""
@@ -109,13 +137,32 @@ class ContestantResource(resources.ModelResource):
         using_transactions = kwargs.get('using_transactions', args[0] if args else True)
         dry_run = kwargs.get('dry_run', args[1] if len(args) > 1 else False)
         
+        print(f"=== AFTER SAVE INSTANCE: {instance.full_name} (ID: {instance.id}) ===")
+        print(f"Dry run: {dry_run}")
+        
         if not dry_run and hasattr(self, '_registered_events') and self._registered_events:
+            print(f"Processing registered events for {instance.full_name}...")
+            
             # Clear existing registrations for this contestant
+            deleted_count = Registration.objects.filter(contestant=instance).count()
             Registration.objects.filter(contestant=instance).delete()
+            if deleted_count > 0:
+                print(f"Cleared {deleted_count} existing registrations")
             
             # Process the registered_events string
             event_names = [name.strip() for name in self._registered_events.split(',') if name.strip()]
-            print(f"Processing {len(event_names)} events for {instance.full_name}: {event_names}")
+            print(f"Processing {len(event_names)} events: {event_names}")
+            
+            # First, validate all events exist
+            missing_events = []
+            for event_name in event_names:
+                if not Event.objects.filter(name=event_name).exists():
+                    if not Event.objects.filter(name__iexact=event_name).exists():
+                        missing_events.append(event_name)
+            
+            if missing_events:
+                print(f"🚨 MISSING EVENTS: {missing_events}")
+                print(f"Available events: {list(Event.objects.values_list('name', flat=True))}")
             
             successfully_registered = []
             failed_events = []
@@ -129,7 +176,8 @@ class ContestantResource(resources.ModelResource):
                         event=event
                     )
                     successfully_registered.append(event_name)
-                    print(f"✓ Registered {instance.full_name} for '{event_name}'")
+                    action = "Created" if created else "Already existed"
+                    print(f"✓ {action} registration for {instance.full_name} → '{event_name}'")
                 except Event.DoesNotExist:
                     # Try case-insensitive match
                     try:
@@ -139,13 +187,17 @@ class ContestantResource(resources.ModelResource):
                             event=event
                         )
                         successfully_registered.append(event_name)
-                        print(f"✓ Registered {instance.full_name} for '{event_name}' (case-insensitive match)")
+                        action = "Created" if created else "Already existed"
+                        print(f"✓ {action} registration for {instance.full_name} → '{event_name}' (case-insensitive)")
                     except Event.DoesNotExist:
                         failed_events.append(event_name)
-                        print(f"✗ Event '{event_name}' not found for contestant {instance.full_name}")
+                        print(f"✗ Event '{event_name}' NOT FOUND for {instance.full_name}")
             
-            print(f"Summary for {instance.full_name}: {len(successfully_registered)} registered, {len(failed_events)} failed")
+            print(f"📊 SUMMARY for {instance.full_name}: {len(successfully_registered)} registered, {len(failed_events)} failed")
+        else:
+            print(f"No registered events to process for {instance.full_name}")
         
+        print(f"=== END AFTER SAVE: {instance.full_name} ===")
         super().after_save_instance(instance, *args, **kwargs)
 
 # --- Admin Classes ---
