@@ -103,6 +103,12 @@ class GenerateEventPostersView(APIView):
         try:
             print(f"=== POSTER GENERATION REQUEST FOR EVENT ID: {event_id} ===")
             
+            # Debug Cloudinary configuration
+            import cloudinary
+            print(f"Cloudinary config - Cloud name: {cloudinary.config().cloud_name}")
+            print(f"Cloudinary config - API key: {cloudinary.config().api_key}")
+            print(f"Cloudinary config - API secret set: {'Yes' if cloudinary.config().api_secret else 'No'}")
+            
             # Optimized query with select_related to reduce database hits
             event = Event.objects.select_related().prefetch_related('categories').get(id=event_id)
             print(f"Event found: {event.name}")
@@ -279,27 +285,46 @@ class GenerateEventPostersView(APIView):
                         except Exception as e:
                             print(f"    ERROR drawing winner: {e}")
                     
-                    # Save with memory-efficient approach
+                    # Save to memory buffer instead of local file for Cloudinary upload
                     output_filename = f'event_{event_id}_{template_name}'
-                    output_path = os.path.join(output_dir, output_filename)
                     
-                    # Save without optimization to avoid PIL issues on Render
-                    image.save(output_path, "PNG")
-                    print(f"✅ Saved: {output_filename}")
+                    # Save image to memory buffer
+                    img_buffer = io.BytesIO()
+                    image.save(img_buffer, format='PNG')
+                    img_buffer.seek(0)
                     
-                    # Verify file was created
-                    if os.path.exists(output_path):
-                        file_size = os.path.getsize(output_path)
-                        print(f"File size: {file_size} bytes")
-                    else:
-                        print(f"❌ File was not created: {output_path}")
+                    print(f"✅ Saved {output_filename} to memory buffer")
                     
-                    # Build URL
-                    image_url = request.build_absolute_uri(
-                        os.path.join(settings.MEDIA_URL, 'generated_posters', output_filename)
-                    )
-                    generated_posters_urls.append({'id': template_name, 'url': image_url})
-                    print(f"Generated URL: {image_url}")
+                    # Upload to Cloudinary
+                    try:
+                        print(f"📤 Uploading {output_filename} to Cloudinary...")
+                        upload_result = cloudinary.uploader.upload(
+                            img_buffer,
+                            public_id=f"generated_posters/{output_filename}",
+                            folder="generated_posters",
+                            resource_type="image",
+                            format="png"
+                        )
+                        
+                        # Get the Cloudinary URL
+                        image_url = upload_result['secure_url']
+                        generated_posters_urls.append({'id': template_name, 'url': image_url})
+                        print(f"✅ Successfully uploaded to Cloudinary: {image_url}")
+                        
+                    except Exception as cloudinary_error:
+                        print(f"❌ Cloudinary upload failed: {cloudinary_error}")
+                        # Fallback: save locally (won't work on Render but good for local testing)
+                        try:
+                            output_path = os.path.join(output_dir, output_filename)
+                            image.save(output_path, "PNG")
+                            image_url = request.build_absolute_uri(
+                                os.path.join(settings.MEDIA_URL, 'generated_posters', output_filename)
+                            )
+                            generated_posters_urls.append({'id': template_name, 'url': image_url})
+                            print(f"⚠️ Saved locally as fallback: {image_url}")
+                        except Exception as local_error:
+                            print(f"❌ Local save also failed: {local_error}")
+                            continue
                     
                     # Immediately close and delete the image to free memory
                     image.close()
