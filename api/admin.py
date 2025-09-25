@@ -75,8 +75,12 @@ class ContestantResource(resources.ModelResource):
         
         return super().before_import_row(row, **kwargs)
     
-    def before_save_instance(self, instance, using_transactions, dry_run, **kwargs):
+    def before_save_instance(self, instance, *args, **kwargs):
         """Debug before saving the contestant"""
+        # Extract parameters from args/kwargs to handle different django-import-export versions
+        using_transactions = kwargs.get('using_transactions', args[0] if args else True)
+        dry_run = kwargs.get('dry_run', args[1] if len(args) > 1 else False)
+        
         print(f"=== BEFORE SAVE INSTANCE ===")
         print(f"Instance: {instance}")
         print(f"Full name: {instance.full_name}")
@@ -85,7 +89,7 @@ class ContestantResource(resources.ModelResource):
         print(f"Category: {instance.category}")
         print(f"Dry run: {dry_run}")
         print(f"=== END BEFORE SAVE ===")
-        return super().before_save_instance(instance, using_transactions, dry_run, **kwargs)
+        return super().before_save_instance(instance, *args, **kwargs)
 
     def import_row(self, row, instance_loader, **kwargs):
         """Override import_row to catch and debug any errors"""
