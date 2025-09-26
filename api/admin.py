@@ -531,10 +531,10 @@ class IndividualChampionAdmin(admin.ModelAdmin):
         queryset = super().get_queryset(request)
         # Only include contestants who have results with points > 0
         queryset = queryset.filter(
-            registration__result__isnull=False,
-            registration__result__points__gt=0
+            registration__results__isnull=False,
+            registration__results__points__gt=0
         ).annotate(
-            total_points=Sum('registration__result__points')
+            total_points=Sum('registration__results__points')
         ).distinct().order_by('-total_points')
         return queryset
     
