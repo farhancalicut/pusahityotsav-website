@@ -3,64 +3,155 @@
 
 {% block extrahead %}{{ block.super }}
 <style>
-    .form-row { padding: 10px; }
-    .submit-row { padding: 10px; background: #f8f8f8; border-top: 1px solid #eee; }
+    /* Scope all styles to the results page only */
+    #result-management-page .form-row { padding: 10px; margin-bottom: 10px; }
+    #result-management-page .submit-row { padding: 15px; background: #000000; border-top: 1px solid #292929; margin-top: 20px; }
+    #result-management-page .result-section { margin-bottom: 30px; border: 1px solid #2d2d2d; padding: 15px; border-radius: 5px; }
+    #result-management-page .result-section h2 { margin-top: 0; color: #bababa; border-bottom: 2px solid #417690; padding-bottom: 5px; }
+    #result-management-page .position-section { background: #000000; }
+    #result-management-page .non-poster-section { background: #000000; }
+    #result-management-page .help-text { font-size: 12px; color: #666; margin-top: 5px; }
+    #result-management-page .event-info { background: #000000; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+    #result-management-page .checkbox-list { max-height: 300px; overflow-y: auto; border: 1px solid #202020; padding: 10px; }
+    #result-management-page .stats { font-size: 14px; color: #eaeaea; }
+    #result-management-page .error { color: #d63031; font-weight: bold; }
 </style>
 {% endblock %}
 
 {% block content %}
-<div>
-    <h1>Add/Edit Results for: {{ event.name }}</h1>
+<div id="result-management-page">
+    <div class="event-info">
+        <h1>Manage Results for: {{ event.name }}</h1>
+        <p class="stats">Total Registered Participants: <strong>{{ registered_participants }}</strong></p>
+    </div>
+    
+    {% if form.non_field_errors %}
+        <div class="error">
+            {{ form.non_field_errors }}
+        </div>
+    {% endif %}
+    
     <form method="post">
         {% csrf_token %}
-        <fieldset class="module aligned">
+        
+        <!-- Result Number Section -->
+        <div class="result-section">
+            <h2>Event Result Information</h2>
             <div class="form-row">
-                <label>Event:</label>
-                <p><strong>{{ event.name }}</strong></p>
+                {{ form.result_number.label_tag }}
+                {{ form.result_number }}
+                {% if form.result_number.help_text %}
+                    <div class="help-text">{{ form.result_number.help_text }}</div>
+                {% endif %}
+                {% if form.result_number.errors %}
+                    <div class="error">{{ form.result_number.errors }}</div>
+                {% endif %}
             </div>
-
-            <h2>Winners</h2>
+        </div>
+        
+        <!-- Position 1 Winners -->
+        <div class="result-section position-section">
+            <h2>Position 1 Winners</h2>
             <div class="form-row">
-                {{ form.winner_1.label_tag }}
-                {{ form.winner_1 }}
-                {{ form.winner_1.errors }}
+                {{ form.winners_1.label_tag }}
+                <div class="checkbox-list">
+                    {{ form.winners_1 }}
+                </div>
+                {% if form.winners_1.help_text %}
+                    <div class="help-text">{{ form.winners_1.help_text }}</div>
+                {% endif %}
+                {% if form.winners_1.errors %}
+                    <div class="error">{{ form.winners_1.errors }}</div>
+                {% endif %}
             </div>
             <div class="form-row">
                 {{ form.points_1.label_tag }}
                 {{ form.points_1 }}
-                {{ form.points_1.errors }}
+                {% if form.points_1.errors %}
+                    <div class="error">{{ form.points_1.errors }}</div>
+                {% endif %}
             </div>
+        </div>
+        
+        <!-- Position 2 Winners -->
+        <div class="result-section position-section">
+            <h2>Position 2 Winners</h2>
             <div class="form-row">
-                {{ form.winner_2.label_tag }}
-                {{ form.winner_2 }}
-                {{ form.winner_2.errors }}
+                {{ form.winners_2.label_tag }}
+                <div class="checkbox-list">
+                    {{ form.winners_2 }}
+                </div>
+                {% if form.winners_2.help_text %}
+                    <div class="help-text">{{ form.winners_2.help_text }}</div>
+                {% endif %}
+                {% if form.winners_2.errors %}
+                    <div class="error">{{ form.winners_2.errors }}</div>
+                {% endif %}
             </div>
             <div class="form-row">
                 {{ form.points_2.label_tag }}
                 {{ form.points_2 }}
-                {{ form.points_2.errors }}
+                {% if form.points_2.errors %}
+                    <div class="error">{{ form.points_2.errors }}</div>
+                {% endif %}
             </div>
+        </div>
+        
+        <!-- Position 3 Winners -->
+        <div class="result-section position-section">
+            <h2>Position 3 Winners</h2>
             <div class="form-row">
-                {{ form.winner_3.label_tag }}
-                {{ form.winner_3 }}
-                {{ form.winner_3.errors }}
+                {{ form.winners_3.label_tag }}
+                <div class="checkbox-list">
+                    {{ form.winners_3 }}
+                </div>
+                {% if form.winners_3.help_text %}
+                    <div class="help-text">{{ form.winners_3.help_text }}</div>
+                {% endif %}
+                {% if form.winners_3.errors %}
+                    <div class="error">{{ form.winners_3.errors }}</div>
+                {% endif %}
             </div>
             <div class="form-row">
                 {{ form.points_3.label_tag }}
                 {{ form.points_3 }}
-                {{ form.points_3.errors }}
+                {% if form.points_3.errors %}
+                    <div class="error">{{ form.points_3.errors }}</div>
+                {% endif %}
             </div>
-            
-            <h2>Details</h2>
+        </div>
+        
+        <!-- Non-Poster Participants Section -->
+        <div class="result-section non-poster-section">
+            <h2>Non-Poster Participants</h2>
+            <p><em>These participants will earn points for group/individual scoring but won't appear on result posters.</em></p>
             <div class="form-row">
-                {{ form.result_number.label_tag }}
-                {{ form.result_number }}
-                {{ form.result_number.errors }}
+                {{ form.non_poster_participants.label_tag }}
+                <div class="checkbox-list">
+                    {{ form.non_poster_participants }}
+                </div>
+                {% if form.non_poster_participants.help_text %}
+                    <div class="help-text">{{ form.non_poster_participants.help_text }}</div>
+                {% endif %}
+                {% if form.non_poster_participants.errors %}
+                    <div class="error">{{ form.non_poster_participants.errors }}</div>
+                {% endif %}
             </div>
-        </fieldset>
+            <div class="form-row">
+                {{ form.non_poster_points.label_tag }}
+                {{ form.non_poster_points }}
+                {% if form.non_poster_points.help_text %}
+                    <div class="help-text">{{ form.non_poster_points.help_text }}</div>
+                {% endif %}
+                {% if form.non_poster_points.errors %}
+                    <div class="error">{{ form.non_poster_points.errors }}</div>
+                {% endif %}
+            </div>
+        </div>
 
         <div class="submit-row">
-            <input type="submit" value="Save Results">
+            <input type="submit" value="Save All Results" class="default" style="font-size: 16px; padding: 10px 20px;">
+            <a href="{% url 'admin:api_event_changelist' %}" style="margin-left: 10px;">Cancel</a>
         </div>
     </form>
 </div>

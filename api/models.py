@@ -21,10 +21,7 @@ class Category(models.Model):
 
 class Event(models.Model):
     name = models.CharField(max_length=100)
-    # This is the key change: an event can now belong to many categories.
     categories = models.ManyToManyField(Category, related_name='events')
-
-    # We are removing the old 'category' ForeignKey and the 'is_general' BooleanField.
 
     def __str__(self):
         return self.name
@@ -59,27 +56,39 @@ class Registration(models.Model):
 
 class Result(models.Model):
     """Stores the result for a single registration."""
-    registration = models.OneToOneField(Registration, on_delete=models.CASCADE)
-    position = models.PositiveIntegerField(validators=[MinValueValidator(1), MaxValueValidator(3)])
+    registration = models.ForeignKey(Registration, on_delete=models.CASCADE, related_name='results')
+    position = models.PositiveIntegerField(validators=[MinValueValidator(1)])  # Removed max validator to support non-poster positions
     points = models.PositiveIntegerField(default=0, help_text="Points awarded by the judges.")
 
     resultNumber = models.CharField(
         max_length=100, 
         blank=True, 
         null=True, 
-        # unique=True, 
         help_text="result number"
     )
+    
+    # NEW FIELDS - Safe additions with defaults
+    include_in_poster = models.BooleanField(
+        default=True, 
+        help_text="Whether this result should appear in generated posters. Unchecked results still count for group/individual scoring."
+    )
+    
+    display_order = models.PositiveIntegerField(
+        default=1,
+        help_text="For tied positions, this determines the order on posters (1=first shown, 2=second shown, etc.)"
+    )
+
+    class Meta:
+        verbose_name = "Published Result"
+        verbose_name_plural = "Published Results"
 
     def __str__(self):
         return f"{self.registration} - {self.position} Place"
 
 class GalleryImage(models.Model):
     caption = models.CharField(max_length=255)
-    # --- ADD THIS FIELD ---
     year = models.IntegerField()
     image = models.ImageField(upload_to='gallery_images/')
-    # Store the Cloudinary URL directly
     cloudinary_url = models.URLField(blank=True, null=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
 

@@ -101,72 +101,45 @@ class PointsView(APIView):
 class GenerateEventPostersView(APIView):
     def get(self, request, event_id):
         try:
-            print(f"=== POSTER GENERATION REQUEST FOR EVENT ID: {event_id} ===")
-            
-            # Debug Cloudinary configuration
-            import cloudinary
-            print(f"Cloudinary config - Cloud name: {cloudinary.config().cloud_name}")
-            print(f"Cloudinary config - API key: {cloudinary.config().api_key}")
-            print(f"Cloudinary config - API secret set: {'Yes' if cloudinary.config().api_secret else 'No'}")
-            
             # Optimized query with select_related to reduce database hits
             event = Event.objects.select_related().prefetch_related('categories').get(id=event_id)
-            print(f"Event found: {event.name}")
             
-            # Debug: Check all results for this event
+            # Get all results for this event
             all_results = Result.objects.filter(registration__event=event).select_related(
                 'registration__contestant__group', 'registration__event'
             )
-            print(f"Total results found for event: {all_results.count()}")
             
-            for result in all_results:
-                print(f"  - {result.registration.contestant.full_name}: Position {result.position}, Points {result.points}, ResultNumber '{result.resultNumber}'")
-            
-            # Get winning results (positions 1, 2, 3)
-            results = all_results.filter(position__in=[1, 2, 3]).order_by('position')
-            print(f"Winning results (positions 1-3): {results.count()}")
+            # Get winning results (positions 1, 2, 3) that should be included in posters
+            results = all_results.filter(
+                position__in=[1, 2, 3], 
+                include_in_poster=True
+            ).order_by('position', 'display_order')  # Order by position first, then display_order for ties
 
             if not results.exists():
-                print("❌ No winning results found - returning empty array")
-                # Check if there are any results at all
-                if all_results.exists():
-                    print("⚠️ Results exist but none have positions 1, 2, or 3")
-                    result_positions = list(all_results.values_list('position', flat=True))
-                    print(f"Available positions: {result_positions}")
-                else:
-                    print("⚠️ No results exist for this event at all")
+                # No poster-eligible winning results found
                 return Response([], status=200)
 
+            
             # Pre-calculate common data once
             result_number = results.first().resultNumber or ""
-            print(f"Result number: '{result_number}'")
-            
-            if not result_number:
-                print("⚠️ WARNING: No result number found!")
             
             category_names = [cat.name for cat in event.categories.all()]
             is_general_event = len(category_names) > 1
-            print(f"Categories: {category_names}, Is general event: {is_general_event}")
             
             # Ensure output directory exists once
             output_dir = os.path.join(settings.MEDIA_ROOT, 'generated_posters')
             os.makedirs(output_dir, exist_ok=True)
-            print(f"Output directory: {output_dir}")
             
             generated_posters_urls = []
-            template_files = ['template_black.png', 'template_pink.png', 'template_purple.png']
+            template_files = ['tmb1.png', 'tmb2.png']
 
             # Process one template at a time to minimize memory usage
             for template_name in template_files:
                 try:
-                    print(f"Processing template: {template_name}")
-                    
                     # Load template and process immediately
                     template_path = os.path.join(settings.BASE_DIR, 'assets', template_name)
-                    print(f"Template path: {template_path}")
                     
                     if not os.path.exists(template_path):
-                        print(f"❌ Template file not found: {template_path}")
                         continue
                     
                     # Open, process, and save in one go to minimize memory usage
@@ -177,34 +150,31 @@ class GenerateEventPostersView(APIView):
                     
                     # Load fonts (do this once per template to save memory)
                     try:
-                        font_main_path = os.path.join(settings.BASE_DIR, 'assets', 'fonts', 'Poppins-Bold.ttf')
-                        font_secondary_path = os.path.join(settings.BASE_DIR, 'assets', 'fonts', 'Poppins-Regular.ttf')
+                        font_main_path = os.path.join(settings.BASE_DIR, 'assets', 'fonts', 'chinese rocks rg.otf')
+                        font_secondary_path = os.path.join(settings.BASE_DIR, 'assets', 'fonts', 'Poppins-Medium.ttf')
                         
                         print(f"Font paths - Main: {font_main_path}, Secondary: {font_secondary_path}")
                         print(f"Font files exist - Main: {os.path.exists(font_main_path)}, Secondary: {os.path.exists(font_secondary_path)}")
                         
-                        font_result_label = ImageFont.truetype(font_main_path, 40)
-                        font_publication_num = ImageFont.truetype(font_main_path, 120)
-                        font_category = ImageFont.truetype(font_secondary_path, 50)
+                        # font_result_label = ImageFont.truetype(font_main_path, 40)
+                        font_publication_num = ImageFont.truetype(font_main_path, 60)
+                        font_category = ImageFont.truetype(font_main_path, 50)
                         font_event = ImageFont.truetype(font_main_path, 60)
                         font_winner = ImageFont.truetype(font_main_path, 45)
-                        font_department = ImageFont.truetype(font_secondary_path, 35)
+                        font_department = ImageFont.truetype(font_secondary_path, 25)
                         print("✅ All fonts loaded successfully")
                         
                     except Exception as font_error:
                         print(f"❌ Font loading error: {font_error}")
                         # Use default font if custom fonts fail
                         font_result_label = font_publication_num = font_category = font_event = font_winner = font_department = ImageFont.load_default()
-                        print("⚠️ Using default font fallback")
                     
                     draw = ImageDraw.Draw(image)
-                    print(f"Created drawing context for {template_name}")
-                    print(f"Image size: {image.size}, Mode: {image.mode}")
                     
                     # Define colors
-                    color_primary = (255, 255, 255)
-                    color_secondary = (255, 255, 255) 
-                    even_name_color = (252, 224, 9)
+                    color_primary = (0, 0, 0)
+                    color_secondary = (0, 0, 0) 
+                    even_name_color = (167, 18, 26)
                     print(f"Colors defined - Primary: {color_primary}, Secondary: {color_secondary}, Event: {even_name_color}")
                     
                     # Get image dimensions for reference
@@ -215,33 +185,33 @@ class GenerateEventPostersView(APIView):
                     # Adjust these X,Y coordinates for any template design
                     
                     # "Result" label position
-                    result_label_x = 200
-                    result_label_y = 150
+                    # result_label_x = 200
+                    # result_label_y = 150
                     
                     # Result number position (01, 02, etc.)
-                    result_num_x = 200
-                    result_num_y = 220
+                    result_num_x = 225
+                    result_num_y = 605
                     
                     # Category position (GIRLS, BOYS, etc.)
-                    category_x = 200
-                    category_y = 400
+                    category_x = 210
+                    category_y = 705
                     
                     # Event name position
-                    event_x = 200
-                    event_y = 500
+                    event_x = 210
+                    event_y = 760
                     
                     # Winners starting position and spacing
-                    winners_start_x = 200
-                    winners_start_y = 600
-                    winners_spacing = 80  # Vertical space between each winner
+                    winners_start_x = 280
+                    winners_start_y = 885
+                    winners_spacing = 95  # Vertical space between each winner
                     
                     # Department name offset (relative to winner name)
                     dept_x_offset = 0    # Horizontal offset from winner name
-                    dept_y_offset = 50   # Vertical offset from winner name
+                    dept_y_offset = 40   # Vertical offset from winner name
                     
                     # Draw "Result" label
-                    draw.text((result_label_x, result_label_y), "Result", font=font_result_label, fill=color_secondary)
-                    print(f"Drew 'Result' label at ({result_label_x}, {result_label_y})")
+                    # draw.text((result_label_x, result_label_y), "Result", font=font_result_label, fill=color_secondary)
+                    # print(f"Drew 'Result' label at ({result_label_x}, {result_label_y})")
                     
                     # Draw result number
                     draw.text((result_num_x, result_num_y), str(result_number), font=font_publication_num, fill=color_primary)
@@ -260,16 +230,16 @@ class GenerateEventPostersView(APIView):
                     draw.text((event_x, event_y), event_text, font=font_event, fill=even_name_color)
                     print(f"Drew event name: '{event_text}' at ({event_x}, {event_y})")
                     
-                    # Draw winners list - simple X,Y positioning
-                    # Sort winners by position for proper display order
-                    sorted_results = sorted(results, key=lambda r: r.position)
+                    # Draw winners list - simple X,Y positioning with tie handling
+                    # Results are already sorted by position, then display_order for ties
                     
-                    for i, result in enumerate(sorted_results):
+                    for i, result in enumerate(results):
                         winner_name = result.registration.contestant.full_name
                         department_name = result.registration.contestant.group.name
                         position = result.position
+                        display_order = result.display_order
                         
-                        print(f"  Drawing winner at position {position}: {winner_name} - {department_name}")
+                        print(f"  Drawing winner at position {position} (display_order: {display_order}): {winner_name} - {department_name}")
                         
                         # Calculate positions for this winner
                         winner_y = winners_start_y + (i * winners_spacing)

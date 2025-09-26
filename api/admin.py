@@ -46,12 +46,10 @@ class ContestantResource(resources.ModelResource):
     def before_import_row(self, row, **kwargs):
         """Process registered_events during import"""
         full_name = row.get('full_name', 'Unknown')
-        print(f"=== IMPORTING: {full_name} ===")
         
         # Store registered_events for later processing
         if 'registered_events' in row:
             self._registered_events = row.get('registered_events', '').strip()
-            print(f"Registered events: '{self._registered_events}'")
         else:
             self._registered_events = ''
         
@@ -60,80 +58,67 @@ class ContestantResource(resources.ModelResource):
         category_name = row.get('category', '').strip()
         
         if group_name:
-            if Group.objects.filter(name=group_name).exists():
-                print(f"✓ Group found: '{group_name}'")
-            else:
-                print(f"✗ Group NOT found: '{group_name}'")
-                print(f"Available groups: {list(Group.objects.values_list('name', flat=True))}")
+            if not Group.objects.filter(name=group_name).exists():
+                # Group doesn't exist - could add logging here if needed
+                pass
         
         if category_name:
-            if Category.objects.filter(name=category_name).exists():
-                print(f"✓ Category found: '{category_name}'")
-            else:
-                print(f"✗ Category NOT found: '{category_name}'")
-                print(f"Available categories: {list(Category.objects.values_list('name', flat=True))}")
+            if not Category.objects.filter(name=category_name).exists():
+                # Category doesn't exist - could add logging here if needed  
+                pass
         
         return super().before_import_row(row, **kwargs)
     
     def before_save_instance(self, instance, *args, **kwargs):
-        """Debug before saving the contestant"""
+        """Process before saving the contestant"""
         # Extract parameters from args/kwargs to handle different django-import-export versions
         using_transactions = kwargs.get('using_transactions', args[0] if args else True)
         dry_run = kwargs.get('dry_run', args[1] if len(args) > 1 else False)
         
-        print(f"=== BEFORE SAVE INSTANCE ===")
-        print(f"Instance: {instance}")
-        print(f"Full name: {instance.full_name}")
-        print(f"Email: {instance.email}")
-        print(f"Group: {instance.group}")
-        print(f"Category: {instance.category}")
-        print(f"Dry run: {dry_run}")
         
-        # Check for potential issues
+        # Check for potential data issues
         if not instance.full_name:
-            print(f"⚠️ WARNING: Empty full_name!")
+            # Empty full_name - could log if needed
+            pass
         if not instance.email:
-            print(f"⚠️ WARNING: Empty email!")
+            # Empty email - could log if needed
+            pass
         if not instance.group:
-            print(f"⚠️ WARNING: Empty group!")
+            # Empty group - could log if needed
+            pass
         if not instance.category:
-            print(f"⚠️ WARNING: Empty category!")
+            # Empty category - could log if needed
+            pass
             
         # Check if email already exists (unique constraint)
         if instance.email:
             existing_contestant = Contestant.objects.filter(email=instance.email).first()
             if existing_contestant and existing_contestant.id != instance.id:
-                print(f"⚠️ WARNING: Email '{instance.email}' already exists for contestant: {existing_contestant.full_name}")
+                # Duplicate email - could log if needed
+                pass
         
-        print(f"=== END BEFORE SAVE ===")
         return super().before_save_instance(instance, *args, **kwargs)
     
     def save_instance(self, instance, *args, **kwargs):
-        """Override save to add transaction debugging"""
+        """Override save to handle transactions properly"""
         try:
-            print(f"=== SAVING INSTANCE: {instance.full_name} ===")
             result = super().save_instance(instance, *args, **kwargs)
-            print(f"✓ Successfully saved: {instance.full_name} (ID: {instance.id})")
             return result
         except Exception as e:
-            print(f"✗ Error saving {instance.full_name}: {e}")
+            # Could add logging here if needed
             raise
 
     def import_row(self, row, instance_loader, **kwargs):
-        """Override import_row to catch and debug any errors"""
+        """Override import_row to handle errors gracefully"""
         try:
-            print(f"=== STARTING IMPORT ROW FOR {row.get('full_name', 'Unknown')} ===")
             result = super().import_row(row, instance_loader, **kwargs)
-            print(f"=== ROW IMPORT RESULT: {result} ===")
             return result
         except Exception as e:
-            print(f"=== ERROR IMPORTING ROW: {e} ===")
-            print(f"Row data was: {dict(row)}")
+            # Could add logging here if needed
             raise  # Re-raise the exception so import process can handle it
 
     def after_save_instance(self, instance, *args, **kwargs):
         """Handle registered_events after saving contestant"""
-        print(f"🔥 AFTER_SAVE_INSTANCE CALLED FOR: {instance.full_name}")
         
         # Extract parameters from args/kwargs to handle different django-import-export versions
         using_transactions = kwargs.get('using_transactions', args[0] if args else True)
@@ -252,44 +237,91 @@ class EventAdmin(admin.ModelAdmin):
 
     def add_results_view(self, request, object_id):
         event = self.get_object(request, object_id)
+        
         if request.method == 'POST':
             form = EventResultForm(request.POST, event=event)
             if form.is_valid():
-                # ... (Your saving logic is correct here)
+                # Clear existing results for this event
+                Result.objects.filter(registration__event=event).delete()
+                
                 data = form.cleaned_data
                 result_number = data.get('result_number')
-                winners_data = [
-                    (1, data.get('winner_1'), data.get('points_1')),
-                    (2, data.get('winner_2'), data.get('points_2')),
-                    (3, data.get('winner_3'), data.get('points_3')),
-                ]
-                for position, registration, points in winners_data:
-                    if registration:
-                        Result.objects.update_or_create(
+                saved_count = 0
+                
+                # Process winners for each position
+                for position in [1, 2, 3]:
+                    winners = data.get(f'winners_{position}')
+                    points = data.get(f'points_{position}', 0)
+                    
+                    if winners and points is not None:
+                        display_order = 1
+                        for registration in winners:
+                            Result.objects.create(
+                                registration=registration,
+                                position=position,
+                                points=points,
+                                resultNumber=result_number,
+                                include_in_poster=True,
+                                display_order=display_order
+                            )
+                            display_order += 1
+                            saved_count += 1
+                            print(f"✅ Saved: {registration.contestant.full_name} - Position {position}, Points {points}")
+                
+                # Process non-poster participants
+                non_poster_participants = data.get('non_poster_participants')
+                non_poster_points = data.get('non_poster_points', 0)
+                
+                if non_poster_participants and non_poster_points is not None:
+                    for registration in non_poster_participants:
+                        # Use position 4 for non-poster participants (outside poster range 1-3)
+                        Result.objects.create(
                             registration=registration,
-                            defaults={
-                                'position': position,
-                                'points': points or 0,
-                                'resultNumber': result_number,
-                            }
+                            position=4,  # Outside poster range
+                            points=non_poster_points,
+                            resultNumber=result_number,
+                            include_in_poster=False,  # Won't appear on posters
+                            display_order=1
                         )
-                self.message_user(request, f"Results for {event.name} saved successfully.", messages.SUCCESS)
+                        saved_count += 1
+                        print(f"✅ Saved (Non-poster): {registration.contestant.full_name} - Points {non_poster_points}")
+                
+                self.message_user(
+                    request, 
+                    f"Results for {event.name} saved successfully! {saved_count} results created.", 
+                    messages.SUCCESS
+                )
                 return redirect(reverse('admin:api_event_changelist'))
+            else:
+                self.message_user(request, "Please correct the errors below.", messages.ERROR)
         else:
+            # Pre-populate form with existing results
             initial_data = {}
             existing_results = Result.objects.filter(registration__event=event)
+            
             if existing_results.exists():
                 initial_data['result_number'] = existing_results.first().resultNumber
-            for result in existing_results:
-                if result.position in [1, 2, 3]:
-                    initial_data[f'winner_{result.position}'] = result.registration
-                    initial_data[f'points_{result.position}'] = result.points
+                
+                # Group results by position
+                for position in [1, 2, 3]:
+                    position_results = existing_results.filter(position=position, include_in_poster=True).order_by('display_order')
+                    if position_results.exists():
+                        initial_data[f'winners_{position}'] = [r.registration for r in position_results]
+                        initial_data[f'points_{position}'] = position_results.first().points
+                
+                # Non-poster participants (position > 3 or include_in_poster=False)
+                non_poster_results = existing_results.filter(include_in_poster=False)
+                if non_poster_results.exists():
+                    initial_data['non_poster_participants'] = [r.registration for r in non_poster_results]
+                    initial_data['non_poster_points'] = non_poster_results.first().points
+                    
             form = EventResultForm(initial=initial_data, event=event)
 
         context = self.admin_site.each_context(request)
         context['opts'] = self.model._meta
         context['form'] = form
         context['event'] = event
+        context['registered_participants'] = Registration.objects.filter(event=event).select_related('contestant', 'contestant__group').count()
         return render(request, 'admin/api/event/change_form_results.html', context)
 
 
@@ -318,19 +350,95 @@ class RegistrationAdmin(admin.ModelAdmin):
     autocomplete_fields = ['contestant', 'event']
 
 @admin.register(Result)
-class ResultAdmin(admin.ModelAdmin):
-    list_display = ('get_contestant_name', 'get_event_name', 'position', 'points', 'resultNumber')
-    list_filter = ('registration__event__categories__name', 'position') # Corrected path
-    search_fields = ('registration__contestant__full_name', 'resultNumber',)
-    autocomplete_fields = ['registration']
+class PublishedResultsAdmin(admin.ModelAdmin):
+    """Simple view for published results - one row per event with winners"""
     
-    @admin.display(description='Contestant')
-    def get_contestant_name(self, obj):
-        return obj.registration.contestant.full_name
-
-    @admin.display(description='Event')
+    list_display = [
+        'get_event_name', 
+        'get_total_results',
+        'get_result_number',
+        'view_winners_button'
+    ]
+    list_filter = [
+        ('registration__event', admin.RelatedOnlyFieldListFilter),
+        'resultNumber',
+    ]
+    search_fields = [
+        'registration__event__name',
+        'resultNumber'
+    ]
+    ordering = ['registration__event__name', '-id']
+    
+    # Make it read-only
+    def has_add_permission(self, request):
+        return False
+    
+    def has_change_permission(self, request, obj=None):
+        return False
+    
+    def has_delete_permission(self, request, obj=None):
+        return False
+    
+    def get_queryset(self, request):
+        # Check if this is a "winners view" (filtered by event and position)
+        if request.GET.get('registration__event__id__exact') and request.GET.get('position__in'):
+            # Show individual winner results for specific event
+            return super().get_queryset(request).select_related(
+                'registration__event', 'registration__contestant'
+            ).order_by('position', 'display_order')
+        else:
+            # Show one result per event (main view)
+            qs = super().get_queryset(request)
+            from django.db.models import Min
+            event_result_ids = qs.values('registration__event').annotate(
+                min_id=Min('id')
+            ).values_list('min_id', flat=True)
+            
+            return qs.filter(id__in=event_result_ids).select_related(
+                'registration__event', 'registration__contestant'
+            ).order_by('registration__event__name', '-id')
+    
+    def get_list_display(self, request):
+        # Different display for winners view vs main view
+        if request.GET.get('registration__event__id__exact') and request.GET.get('position__in'):
+            return ['get_position_display', 'get_winner_name', 'back_to_events_button']
+        else:
+            return ['get_event_name', 'get_total_results', 'get_result_number', 'view_winners_button']
+    
+    # Custom display methods for main view
+    @admin.display(description='Event', ordering='registration__event__name')
     def get_event_name(self, obj):
         return obj.registration.event.name
+    
+    @admin.display(description='Published Results')
+    def get_total_results(self, obj):
+        total = Result.objects.filter(registration__event=obj.registration.event).count()
+        return f"{total} results"
+    
+    @admin.display(description='Result #', ordering='resultNumber')
+    def get_result_number(self, obj):
+        return obj.resultNumber or '-'
+    
+    @admin.display(description='Winners')
+    def view_winners_button(self, obj):
+        event_id = obj.registration.event.id
+        url = reverse('admin:api_result_changelist') + f'?registration__event__id__exact={event_id}&position__in=1,2,3'
+        return format_html('<a class="button" href="{}">View Winners</a>', url)
+    
+    # Custom display methods for winners view
+    @admin.display(description='Position')
+    def get_position_display(self, obj):
+        medals = {1: '🥇 First', 2: '🥈 Second', 3: '🥉 Third'}
+        return medals.get(obj.position, f'Position {obj.position}')
+    
+    @admin.display(description='Winner')
+    def get_winner_name(self, obj):
+        return obj.registration.contestant.full_name
+    
+    @admin.display(description='')
+    def back_to_events_button(self, obj):
+        url = reverse('admin:api_result_changelist')
+        return format_html('<a href="{}">← Back to Events</a>', url)
 
 @admin.register(GalleryImage)
 class GalleryImageAdmin(admin.ModelAdmin):
