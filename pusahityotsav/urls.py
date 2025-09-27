@@ -19,7 +19,7 @@ from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views.static import serve
-from api.views import serve_react_app
+from api.views import serve_react_app, debug_routing
 import os
 
 
@@ -28,6 +28,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     # API routes
     path('api/', include('api.urls')),
+    # Debug route (temporary)
+    path('debug-routing/', debug_routing, name='debug_routing'),
 ]
 
 # Add media files serving

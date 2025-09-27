@@ -426,11 +426,43 @@ def serve_react_app(request):
     """
     try:
         index_file_path = os.path.join(settings.BASE_DIR, 'frontend', 'build', 'index.html')
+        
+        # Check if the file exists
+        if not os.path.exists(index_file_path):
+            return HttpResponse(
+                '<h1>Frontend not built</h1><p>Please run <code>npm run build</code> in the frontend directory.</p>', 
+                content_type='text/html', 
+                status=404
+            )
+        
         with open(index_file_path, 'r', encoding='utf-8') as f:
-            return HttpResponse(f.read(), content_type='text/html')
-    except FileNotFoundError:
+            content = f.read()
+            
+        # Set proper headers for SPA
+        response = HttpResponse(content, content_type='text/html')
+        response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response['Pragma'] = 'no-cache'
+        response['Expires'] = '0'
+        
+        return response
+        
+    except Exception as e:
         return HttpResponse(
-            '<h1>Frontend not built</h1><p>Please run <code>npm run build</code> in the frontend directory.</p>', 
+            f'<h1>Error serving frontend</h1><p>Error: {str(e)}</p>', 
             content_type='text/html', 
-            status=404
+            status=500
         )
+
+
+def debug_routing(request):
+    """Debug view to see what's happening with routing"""
+    return JsonResponse({
+        'path': request.path,
+        'method': request.method,
+        'headers': dict(request.headers),
+        'META': {
+            'HTTP_HOST': request.META.get('HTTP_HOST'),
+            'SERVER_NAME': request.META.get('SERVER_NAME'),
+            'REQUEST_URI': request.META.get('REQUEST_URI', 'Not set'),
+        }
+    })
