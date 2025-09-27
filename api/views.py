@@ -5,6 +5,7 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 from django.db.models import Sum
 from django.db.models import Q
+from django.utils import timezone
 import cloudinary.uploader
 from django.db import connection
 
@@ -416,3 +417,20 @@ def ping_database(request):
             'database': 'error',
             'message': str(e)
         }, status=500)
+
+
+def serve_react_app(request):
+    """
+    Serve the React app's index.html for all frontend routes.
+    This handles React Router's client-side routing.
+    """
+    try:
+        index_file_path = os.path.join(settings.BASE_DIR, 'frontend', 'build', 'index.html')
+        with open(index_file_path, 'r', encoding='utf-8') as f:
+            return HttpResponse(f.read(), content_type='text/html')
+    except FileNotFoundError:
+        return HttpResponse(
+            '<h1>Frontend not built</h1><p>Please run <code>npm run build</code> in the frontend directory.</p>', 
+            content_type='text/html', 
+            status=404
+        )
