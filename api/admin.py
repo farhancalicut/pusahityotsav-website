@@ -524,7 +524,7 @@ class CarouselImageAdmin(admin.ModelAdmin):
 
 @admin.register(IndividualChampion)
 class IndividualChampionAdmin(admin.ModelAdmin):
-    list_display = ['full_name', 'group', 'total_points', 'events_participated']
+    list_display = ['full_name', 'group', 'total_points', 'events_count', 'events_participated']
 
     def get_queryset(self, request):
         from django.db.models import Q
@@ -542,14 +542,31 @@ class IndividualChampionAdmin(admin.ModelAdmin):
     def total_points(self, obj):
         return obj.total_points if obj.total_points else 0
     
-    @admin.display(description='Events Participated')
-    def events_participated(self, obj):
-        # Count events where the contestant has results
+    @admin.display(description='Events Count')
+    def events_count(self, obj):
+        # Count unique events where the contestant has results
         events_count = Result.objects.filter(
             registration__contestant=obj,
             points__gt=0
-        ).count()
+        ).values('registration__event').distinct().count()
         return events_count
+    
+    @admin.display(description='Events Participated')
+    def events_participated(self, obj):
+        # Get event names where the contestant has results
+        results = Result.objects.filter(
+            registration__contestant=obj,
+            points__gt=0
+        ).select_related('registration__event')
+        
+        event_names = [result.registration.event.name for result in results]
+        # Remove duplicates while preserving order
+        unique_events = list(dict.fromkeys(event_names))
+        
+        if not unique_events:
+            return "None"
+        
+        return ", ".join(unique_events)
     
     def has_add_permission(self, request): return False
     def has_change_permission(self, request, obj=None): return False
