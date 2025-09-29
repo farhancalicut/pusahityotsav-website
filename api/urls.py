@@ -14,7 +14,8 @@ from .views import (
     EventsForRegistrationView,
     debug_cloudinary_vars,
     debug_gallery_images, # <-- ADD THIS NEW IMPORT
-    ping_database
+    ping_database,
+    WinnersExportView  # Add the new export view
 )
 from . import views
 
@@ -33,6 +34,10 @@ urlpatterns = [
     path('points/', PointsView.as_view(), name='points'),
     path('generate-event-posters/<int:event_id>/', GenerateEventPostersView.as_view(), name='generate-event-posters'),
     path('events-for-registration/<int:category_id>/', EventsForRegistrationView.as_view(), name='events-for-registration'),
+
+    # Winners Export endpoints
+    path('export-winners/', WinnersExportView.as_view(), name='export-all-winners'),
+    path('export-winners/<int:event_id>/', WinnersExportView.as_view(), name='export-event-winners'),
 
     # Debug endpoints
     path('debug-vars/', debug_cloudinary_vars, name='debug-vars'),

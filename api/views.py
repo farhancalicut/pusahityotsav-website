@@ -466,3 +466,87 @@ def debug_routing(request):
             'REQUEST_URI': request.META.get('REQUEST_URI', 'Not set'),
         }
     })
+
+# Winners Export Views
+from django.http import HttpResponse
+from datetime import datetime
+import csv
+
+class WinnersExportView(APIView):
+    """
+    Export winners list as CSV
+    """
+    def get(self, request, event_id=None):
+        try:
+            # Get winners data (positions 1, 2, 3)
+            winners_query = Result.objects.filter(
+                position__in=[1, 2, 3]
+            ).select_related(
+                'registration__event',
+                'registration__contestant__group',
+                'registration__contestant__category'
+            ).order_by('registration__event__name', 'position', 'display_order')
+            
+            # Filter by specific event if provided
+            if event_id:
+                try:
+                    event = Event.objects.get(id=event_id)
+                    winners_query = winners_query.filter(registration__event__id=event_id)
+                    filename_prefix = f"{event.name.replace(' ', '_')}_Winners"
+                except Event.DoesNotExist:
+                    return Response({"error": "Event not found."}, status=404)
+            else:
+                filename_prefix = "All_Winners"
+            
+            # Create CSV response
+            response = HttpResponse(content_type='text/csv')
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            filename = f'{filename_prefix}_{timestamp}.csv'
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            
+            writer = csv.writer(response)
+            
+            # Write headers
+            headers = [
+                'Event Name',
+                'Position', 
+                'Participant Name',
+                'State',
+                'Department/Group',
+                'Gender',
+                'Phone Number',
+                'Category',
+                'Course',
+                'Result Number'
+            ]
+            writer.writerow(headers)
+            
+            # Write data
+            for result in winners_query:
+                contestant = result.registration.contestant
+                
+                # Format position
+                position_text = {
+                    1: "First",
+                    2: "Second", 
+                    3: "Third"
+                }.get(result.position, f"{result.position}th")
+                
+                row = [
+                    result.registration.event.name,
+                    position_text,
+                    contestant.full_name,
+                    contestant.state,
+                    contestant.group.name if contestant.group else "N/A",
+                    contestant.gender,
+                    contestant.phone_number,
+                    contestant.category.name if contestant.category else "N/A",
+                    contestant.course,
+                    result.resultNumber or "N/A"
+                ]
+                writer.writerow(row)
+            
+            return response
+            
+        except Exception as e:
+            return Response({'error': f'Export failed: {str(e)}'}, status=500)

@@ -4,6 +4,10 @@ from django.db.models import Sum
 from django.urls import path, reverse
 from django.shortcuts import render, redirect
 from django.utils.html import format_html
+from django.http import HttpResponse, JsonResponse
+import csv
+import io
+from datetime import datetime
 
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
@@ -14,6 +18,58 @@ from .models import (
     Group, Category, Event, Contestant, Registration, Result, GalleryImage, CarouselImage, IndividualChampion
 )
 from .forms import EventResultForm # Import the one correct form
+
+# --- Winners Export Resource ---
+class WinnersResource(resources.ModelResource):
+    """Resource for exporting winners data"""
+    event_name = Field(column_name='Event Name')
+    position = Field(column_name='Position')
+    participant_name = Field(column_name='Participant Name')
+    state = Field(column_name='State')
+    department_group = Field(column_name='Department/Group')
+    gender = Field(column_name='Gender')
+    phone_number = Field(column_name='Phone Number')
+    category = Field(column_name='Category')
+    course = Field(column_name='Course')
+    
+    class Meta:
+        model = Result
+        fields = ('event_name', 'position', 'participant_name', 'state', 'department_group', 'gender', 'phone_number', 'category', 'course')
+        export_order = fields
+    
+    def dehydrate_event_name(self, result):
+        return result.registration.event.name
+    
+    def dehydrate_position(self, result):
+        if result.position == 1:
+            return "First"
+        elif result.position == 2:
+            return "Second" 
+        elif result.position == 3:
+            return "Third"
+        else:
+            return f"{result.position}th"
+    
+    def dehydrate_participant_name(self, result):
+        return result.registration.contestant.full_name
+    
+    def dehydrate_state(self, result):
+        return result.registration.contestant.state
+    
+    def dehydrate_department_group(self, result):
+        return result.registration.contestant.group.name if result.registration.contestant.group else "N/A"
+    
+    def dehydrate_gender(self, result):
+        return result.registration.contestant.gender
+    
+    def dehydrate_phone_number(self, result):
+        return result.registration.contestant.phone_number
+    
+    def dehydrate_category(self, result):
+        return result.registration.contestant.category.name if result.registration.contestant.category else "N/A"
+    
+    def dehydrate_course(self, result):
+        return result.registration.contestant.course
 
 # --- Import/Export Resource ---
 class ContestantResource(resources.ModelResource):
@@ -357,7 +413,8 @@ class PublishedResultsAdmin(admin.ModelAdmin):
         'get_event_name', 
         'get_total_results',
         'get_result_number',
-        'view_winners_button'
+        'view_winners_button',
+        'export_winners_button'
     ]
     list_filter = [
         ('registration__event', admin.RelatedOnlyFieldListFilter),
@@ -368,6 +425,15 @@ class PublishedResultsAdmin(admin.ModelAdmin):
         'resultNumber'
     ]
     ordering = ['registration__event__name', '-id']
+    actions = ['export_all_winners_csv']
+    
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('export-winners-csv/', self.admin_site.admin_view(self.export_winners_csv_view), name='export-winners-csv'),
+            path('export-winners-csv/<int:event_id>/', self.admin_site.admin_view(self.export_event_winners_csv_view), name='export-event-winners-csv'),
+        ]
+        return custom_urls + urls
     
     # Make it read-only
     def has_add_permission(self, request):
@@ -425,6 +491,12 @@ class PublishedResultsAdmin(admin.ModelAdmin):
         url = reverse('admin:api_result_changelist') + f'?registration__event__id__exact={event_id}&position__in=1,2,3'
         return format_html('<a class="button" href="{}">View Winners</a>', url)
     
+    @admin.display(description='Export')
+    def export_winners_button(self, obj):
+        event_id = obj.registration.event.id
+        url = reverse('admin:export-event-winners-csv', args=[event_id])
+        return format_html('<a class="button" href="{}">Export Winners CSV</a>', url)
+    
     # Custom display methods for winners view
     @admin.display(description='Position')
     def get_position_display(self, obj):
@@ -439,6 +511,90 @@ class PublishedResultsAdmin(admin.ModelAdmin):
     def back_to_events_button(self, obj):
         url = reverse('admin:api_result_changelist')
         return format_html('<a href="{}">← Back to Events</a>', url)
+    
+    # Export Methods
+    def export_all_winners_csv(self, request, queryset):
+        """Admin action to export all winners"""
+        return self._export_winners_csv("All_Winners")
+    export_all_winners_csv.short_description = "Export all winners to CSV"
+    
+    def export_winners_csv_view(self, request):
+        """Export all winners CSV view"""
+        return self._export_winners_csv("All_Winners")
+    
+    def export_event_winners_csv_view(self, request, event_id):
+        """Export winners for specific event"""
+        try:
+            event = Event.objects.get(id=event_id)
+            return self._export_winners_csv(f"{event.name}_Winners", event_id=event_id)
+        except Event.DoesNotExist:
+            messages.error(request, "Event not found.")
+            return redirect('admin:api_result_changelist')
+    
+    def _export_winners_csv(self, filename_prefix, event_id=None):
+        """Helper method to generate CSV export"""
+        # Get winners data (positions 1, 2, 3)
+        winners_query = Result.objects.filter(
+            position__in=[1, 2, 3]
+        ).select_related(
+            'registration__event',
+            'registration__contestant__group',
+            'registration__contestant__category'
+        ).order_by('registration__event__name', 'position', 'display_order')
+        
+        # Filter by specific event if provided
+        if event_id:
+            winners_query = winners_query.filter(registration__event__id=event_id)
+        
+        # Create CSV response
+        response = HttpResponse(content_type='text/csv')
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f'{filename_prefix}_{timestamp}.csv'
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        writer = csv.writer(response)
+        
+        # Write headers
+        headers = [
+            'Event Name',
+            'Position', 
+            'Participant Name',
+            'State',
+            'Department/Group',
+            'Gender',
+            'Phone Number',
+            'Category',
+            'Course',
+            'Result Number'
+        ]
+        writer.writerow(headers)
+        
+        # Write data
+        for result in winners_query:
+            contestant = result.registration.contestant
+            
+            # Format position
+            position_text = {
+                1: "First",
+                2: "Second", 
+                3: "Third"
+            }.get(result.position, f"{result.position}th")
+            
+            row = [
+                result.registration.event.name,
+                position_text,
+                contestant.full_name,
+                contestant.state,
+                contestant.group.name if contestant.group else "N/A",
+                contestant.gender,
+                contestant.phone_number,
+                contestant.category.name if contestant.category else "N/A",
+                contestant.course,
+                result.resultNumber or "N/A"
+            ]
+            writer.writerow(row)
+        
+        return response
 
 @admin.register(GalleryImage)
 class GalleryImageAdmin(admin.ModelAdmin):

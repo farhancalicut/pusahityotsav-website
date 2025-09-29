@@ -102,10 +102,38 @@ function ResultFilter({ onFilter }) {
         onClick={handleFilterClick}
         disabled={!selectedEvent}
         fullWidth
-        sx={{ py: 1.5, backgroundColor: "#1976d2", fontWeight: "bold" }}
+        sx={{ py: 1.5, backgroundColor: "#1976d2", fontWeight: "bold", mb: 2 }}
       >
         Get Results
       </Button>
+      
+      {/* Export Buttons */}
+      <Typography
+        variant="h6"
+        sx={{ fontWeight: "bold", color: "#0d47a1", mb: 2, textAlign: "center" }}
+      >
+        Export Winners
+      </Typography>
+      
+      <Button
+        variant="outlined"
+        onClick={() => window.open(`${API_BASE_URL}/api/export-winners/`, '_blank')}
+        fullWidth
+        sx={{ py: 1.5, mb: 1, borderColor: "#1976d2", color: "#1976d2", fontWeight: "bold" }}
+      >
+        Export All Winners CSV
+      </Button>
+      
+      {selectedEvent && (
+        <Button
+          variant="outlined"
+          onClick={() => window.open(`${API_BASE_URL}/api/export-winners/${selectedEvent}/`, '_blank')}
+          fullWidth
+          sx={{ py: 1.5, borderColor: "#4caf50", color: "#4caf50", fontWeight: "bold" }}
+        >
+          Export Selected Event Winners CSV
+        </Button>
+      )}
     </Paper>
   );
 }
