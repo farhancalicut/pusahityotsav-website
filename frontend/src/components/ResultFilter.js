@@ -132,8 +132,8 @@ function ResultFilter({ onFilter }) {
           sx={{ py: 1.5, borderColor: "#4caf50", color: "#4caf50", fontWeight: "bold" }}
         >
           Export Selected Event Winners CSV
-        </Button> */}
-      )}
+        </Button> 
+      )} */}
     </Paper>
   );
 }
