@@ -494,8 +494,9 @@ class PublishedResultsAdmin(admin.ModelAdmin):
     @admin.display(description='Export')
     def export_winners_button(self, obj):
         event_id = obj.registration.event.id
-        url = reverse('admin:export-event-winners-csv', args=[event_id])
-        return format_html('<a class="button" href="{}">Export Winners CSV</a>', url)
+        # Use the API endpoint directly
+        url = f'/api/export-winners/{event_id}/'
+        return format_html('<a class="button" href="{}" target="_blank">Export Winners CSV</a>', url)
     
     # Custom display methods for winners view
     @admin.display(description='Position')
